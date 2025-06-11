@@ -20,6 +20,7 @@ import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import Divider from "@mui/material/Divider";
 import ListItem from "@mui/material/ListItem";
+import Page from "@/components/loginmodal/Page";
 
 const Navbar = () => {
   const router = useRouter();
@@ -150,7 +151,7 @@ const Navbar = () => {
             >
               <TranslateIcon />
             </IconButton>
-            Login
+            <Page />
             {/* Hamburger Icon for Small Devices */}
             <IconButton
               edge="start"
