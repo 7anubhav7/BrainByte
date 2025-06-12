@@ -21,8 +21,10 @@ import List from "@mui/material/List";
 import Divider from "@mui/material/Divider";
 import ListItem from "@mui/material/ListItem";
 import Page from "@/components/loginmodal/Page";
+import { useSession } from "next-auth/react";
 
 const Navbar = () => {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const menuItems = ["Courses", "Jobs", "Practice", "Contests"];
 
@@ -151,7 +153,31 @@ const Navbar = () => {
             >
               <TranslateIcon />
             </IconButton>
-            <Page />
+
+            {status === "authenticated" ? (
+              session?.user?.image && (
+                <img
+                  src={session?.user?.image || "/images/pic1.png"} // Fallback for default avatar
+                  alt="User Avatar"
+                  style={{
+                    width: "50px",
+                    height: "50px",
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    router.push(
+                      session?.user?.role === "admin"
+                        ? "/dashboard/admin"
+                        : "/dashboard/user"
+                    )
+                  }
+                />
+              )
+            ) : (
+              <Page />
+            )}
+
             {/* Hamburger Icon for Small Devices */}
             <IconButton
               edge="start"

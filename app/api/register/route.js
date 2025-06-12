@@ -1,16 +1,52 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-
+import fetch from "node-fetch";
 import User from "@/models/user";
 import dbConnect from "@/utils/dbConnect";
+
+const verifyRecaptcha = async (token, retries = 3) => {
+  const secretKey = "6LeAzV0rAAAAAOHpnaz81f_V70jM8mAslVCmeBI7";
+  const url = "https://www.google.com/recaptcha/api/siteverify";
+
+  const params = `secret=${secretKey}&response=${token}`;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params,
+      });
+
+      const data = await response.json();
+      console.log("data google", data);
+
+      if (data.success) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      if (attempt === retries - 1) {
+        throw new Error("All reCaptcha verification attempts failed!");
+      }
+    }
+  }
+};
 
 export async function POST(req) {
   await dbConnect();
   const body = await req.json();
 
-  const { name, email, password, organization } = body;
+  const { name, email, password, organization, recaptchaToken } = body;
 
-  console.log({ name, email, password, organization });
+  //console.log({ name, email, password, organization, recaptchaToken });
+
+  const isHuman = await verifyRecaptcha(recaptchaToken);
+  if (!isHuman) {
+    return NextResponse.json({ err: "reCaptcha verification failed!" });
+  }
 
   try {
     const existingUser = await User.findOne({ email });
