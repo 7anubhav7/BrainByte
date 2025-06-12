@@ -9,10 +9,14 @@ import CloseIcon from "@mui/icons-material/Close";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import loginModalStyles from "./modalStyles";
-import { IconButton, TextField } from "@mui/material";
+import { Divider, IconButton, TextField } from "@mui/material";
 import { toast } from "react-toastify";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useSession, signIn, signOut } from "next-auth/react";
+import GoogleIcon from "@mui/icons-material/Google";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
 const CaptchaProtectionPopup = () => {
   const [hovered, setHovered] = useState(false);
@@ -226,7 +230,6 @@ const LoginModal = ({ open, handleClose }) => {
 
         <form
           onSubmit={(e) => {
-            e.preventDefault();
             activeTab === 1 ? handleSubmit(e) : handleLogin(e);
           }}
         >
@@ -304,6 +307,64 @@ const LoginModal = ({ open, handleClose }) => {
               : "Sign Up"}
           </Button>
         </form>
+        <Divider sx={{ my: 2 }}>or</Divider>
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<GoogleIcon />}
+            sx={{ textTransform: "none", color: "#fff" }}
+            fullWidth
+            style={{ marginRight: "8px", backgroundColor: "red" }}
+            onClick={() => signIn("google")}
+          >
+            Log In with Google
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<FacebookIcon />}
+            sx={{ textTransform: "none", color: "#fff" }}
+            fullWidth
+            style={{ marginRight: "8px", backgroundColor: "blue" }}
+            onClick={() => signIn("facebook")}
+          >
+            Log In with Facebook
+          </Button>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<LinkedInIcon />}
+            sx={{ textTransform: "none", color: "#fff" }}
+            fullWidth
+            style={{ marginRight: "8px", backgroundColor: "blue" }}
+            onClick={() => signIn("linkedin")}
+          >
+            Log In with LinkedIn
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<GitHubIcon />}
+            sx={{ textTransform: "none", color: "#fff" }}
+            fullWidth
+            style={{ marginRight: "8px", backgroundColor: "black" }}
+            onClick={() => signIn("github")}
+          >
+            Log In with Github
+          </Button>
+        </Box>
+
+        <Typography
+          variant="body2"
+          align="center"
+          sx={{
+            mt: 1,
+            color: "black",
+            fontSize: "1rem",
+          }}
+        >
+          By creating this account, you agree to our privacy policy and cookies
+        </Typography>
       </Box>
     </Modal>
   );
