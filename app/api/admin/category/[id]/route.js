@@ -24,9 +24,9 @@ export async function DELETE(req, context) {
   await dbConnect();
 
   try {
-    const deletingCategory = await Category.findByIdAndUpdate(
-      context.params.id
-    );
+    const deletingCategory = await Category.findByIdAndDelete({
+      _id: context.params.id,
+    });
     return NextResponse.json(deletingCategory);
   } catch (error) {
     return NextResponse.json({ err: error.message }, { status: 500 });
