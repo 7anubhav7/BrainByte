@@ -25,7 +25,9 @@ const CategoryManager = () => {
   const [newCategory, setNewCategory] = useState("");
   const dispatch = useDispatch();
   const [editing, setEditing] = useState({ id: null, name: "" });
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const [filteredCategories, setFilteredCategories] = useState([]);
   const { list: categories, loading } = useSelector(
     (state) => state.categories
   );
@@ -33,7 +35,11 @@ const CategoryManager = () => {
   // Fetch categories on mount
   useEffect(() => {
     dispatch(fetchCategories());
-  }, [dispatch]);
+  }, []);
+
+  useEffect(() => {
+    setFilteredCategories(categories);
+  }, [categories]);
 
   const handleSaveCategory = () => {
     if (editing.id) {
@@ -48,11 +54,45 @@ const CategoryManager = () => {
   const handleDeleteCategory = (id) => {
     dispatch(deleteCategory(id));
   };
+
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    if (term === "") {
+      setFilteredCategories(categories);
+    } else {
+      const filtered = categories.filter(() =>
+        cat.name.toLowerCase().includes(term.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+    }
+  };
+
   return (
     <Box sx={categoryManagerStyles.container}>
       <Typography variant="h4" gutterBottom>
         CategoryManager
       </Typography>
+
+      <Box display="flex" gap={2} mb={3}>
+        <TextField
+          label="Search Category"
+          variant="outlined"
+          fullWidth
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          inputProps={{
+            startadornment: (
+              <InputAdornment postion="start">
+                <Search style={categoryManagerStyles.searchIcon} />
+              </InputAdornment>
+            ),
+          }}
+          InputLabelProps={{
+            style: categoryManagerStyles.inputLabel,
+          }}
+          sx={categoryManagerStyles.searchField}
+        />
+      </Box>
 
       <Box display="flex" gap={2} mb={3}>
         <TextField
@@ -82,7 +122,7 @@ const CategoryManager = () => {
         {loading ? (
           <Typography>Loading...</Typography>
         ) : (
-          categories?.map((category) => (
+          filteredCategories?.map((category) => (
             <ListItem
               key={category?._id}
               divider
