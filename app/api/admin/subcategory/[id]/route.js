@@ -21,10 +21,12 @@ export async function PUT(req, context) {
 
 export async function DELETE(req, context) {
   await dbConnect();
+  console.log("context", context.params.id);
   try {
     const deletingSubCategory = await SubCategory.findByIdAndDelete({
       _id: context.params.id,
     });
+    console.log("deleting sub category", deletingSubCategory);
     return NextResponse.json(deletingSubCategory);
   } catch (error) {
     return NextResponse.json({ err: error.message }, { status: 500 });
