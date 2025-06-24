@@ -29,9 +29,8 @@ export async function POST(req) {
 
   const body = await req.json();
   const { categoryId, subcategoryId, title, subtitle } = body;
-
+  console.log({ categoryId, subcategoryId, title, subtitle });
   const subcategory = await SubCategory.findOne({ _id: subcategoryId });
-
   // Extracting the subcategory's name (if available)
   const subcategorytitle = subcategory?.name;
 
@@ -45,7 +44,7 @@ export async function POST(req) {
       subtitle,
       slug: slugify(title) || slugify(subcategorytitle), // Generating a slug from the title or subcategory name
     });
-
+    console.log("Successfully created ---------", cateWithSubCate);
     return NextResponse.json(cateWithSubCate);
   } catch (err) {
     return NextResponse.json({ err: err.message }, { status: 500 });
