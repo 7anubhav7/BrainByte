@@ -3,11 +3,13 @@
 import styles from "./page.module.css";
 
 import Navbar from "@/components/navbar/Navbar";
+import Tabs from "@/components/tab/Tab";
 
 export default function Home() {
   return (
     <div>
-      <Navbar/>
+      <Navbar />
+      <Tabs />
     </div>
   );
 }

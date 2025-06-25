@@ -35,7 +35,7 @@ const CategoryManager = () => {
   // Fetch categories on mount
   useEffect(() => {
     dispatch(fetchCategories());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     setFilteredCategories(categories);

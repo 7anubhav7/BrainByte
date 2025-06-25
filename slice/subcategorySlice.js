@@ -11,7 +11,7 @@ export const addSubCategory = createAsyncThunk(
       },
       body: JSON.stringify({ name: newSubCategory }),
     });
-    toast.success("subcategory created successfully");
+    toast.success("Subcategory created successfully");
     const data = await response.json();
     return data;
   }
@@ -27,7 +27,7 @@ export const updateSubCategory = createAsyncThunk(
       body: JSON.stringify({ id, name }),
       // Sends the updated subcategory name and ID in the request body
     });
-    toast.success("subcategory updated successfully");
+    toast.success("Subcategory updated successfully");
     return response.json();
     // Converts response data to JSON and returns it
   }
@@ -61,7 +61,7 @@ export const deleteSubCategory = createAsyncThunk(
       method: "DELETE",
     });
     // Sends a DELETE request to remove the subcategory with the given ID
-    toast.success("subcategory deleted successfully");
+    toast.success("Subcategory deleted successfully");
     return id;
     // Returns the deleted subcategory's ID to update the Redux state
   }
