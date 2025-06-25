@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -23,6 +23,7 @@ import {
   resetEditingItem,
   saveItem,
   fetchItems,
+  deleteItem,
 } from "@/slice/catewithsubcateSlice";
 
 const ItemManager = () => {
@@ -34,17 +35,44 @@ const ItemManager = () => {
   const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [title, setTitle] = useState("");
   const [subtitle, setSubTitle] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredItems, setFilteredItems] = useState(items);
   //Debug
   useEffect(() => {
     console.log("Cateogires fetched-", categories);
   }, [categories]);
-  //
 
+  console.log("editing item--------", editingItem);
+  //
   useEffect(() => {
     dispatch(fetchCategories());
     dispatch(fetchSubCategories());
     dispatch(fetchItems());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (editingItem) {
+      setSelectedCategory(editingItem.categoryId._id);
+      setSelectedSubCategory(editingItem.subcategoryId._id);
+      setTitle(editingItem.title);
+      setSubTitle(editingItem.subtitle);
+    } else {
+      resetForm();
+    }
+  }, [editingItem]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = items.filter((item) =>
+        `${item.title} ${item.subtitle} ${item.categoryId.name} ${item.subcategoryId.name}`
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+      );
+      setFilteredItems(filtered);
+    } else {
+      setFilteredItems(items);
+    }
+  }, [searchQuery, items]);
 
   const handleSaveItem = () => {
     const item = {
@@ -54,6 +82,7 @@ const ItemManager = () => {
       subtitle,
     };
     dispatch(saveItem(item)).then(() => {
+      dispatch(fetchItems());
       resetForm();
     });
   };
@@ -64,6 +93,16 @@ const ItemManager = () => {
     setTitle("");
     setSubTitle("");
     dispatch(resetEditingItem());
+  };
+
+  //handle category change
+  const handleCategoryChange = (cateogryId) => {
+    setSelectedCategory(cateogryId);
+    setSelectedSubCategory("");
+  };
+
+  const handleSubCategoryChange = (subcategoryId) => {
+    setSelectedSubCategory(subcategoryId);
   };
 
   // Handle delete item
@@ -77,12 +116,23 @@ const ItemManager = () => {
         Category with Sub Category
       </Typography>
 
+      <TextField
+        label="Search by Title, Subtitle, Category or Sub Category"
+        fullWidth
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        sx={styles.searchField}
+        InputLabelProps={{
+          style: { color: "#8A12FC" },
+        }}
+      />
+
       <Box display="flex" flexDirection="column" gap={2} mb={3}>
         <FormControl fullWidth sx={styles.formControl}>
           <InputLabel>Category</InputLabel>
           <Select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => handleCategoryChange(e.target.value)}
             sx={styles.selectField}
           >
             {categories.map((category) => (
@@ -97,7 +147,7 @@ const ItemManager = () => {
           <InputLabel>SubCategory</InputLabel>
           <Select
             value={selectedSubCategory}
-            onChange={(e) => setSelectedSubCategory(e.target.value)}
+            onChange={(e) => handleSubCategoryChange(e.target.value)}
             sx={styles.selectField}
             disabled={!selectedCategory}
           >
@@ -114,6 +164,9 @@ const ItemManager = () => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           sx={styles.textField}
+          InputLabelProps={{
+            style: { color: "#8A12FC" },
+          }}
         />
 
         <TextField
@@ -121,6 +174,9 @@ const ItemManager = () => {
           value={subtitle}
           onChange={(e) => setSubTitle(e.target.value)}
           sx={styles.textField}
+          InputLabelProps={{
+            style: { color: "#8A12FC" },
+          }}
         />
         <Button
           variant="contained"
@@ -128,7 +184,7 @@ const ItemManager = () => {
           disabled={!selectedCategory || !selectedSubCategory}
           sx={styles.button}
         >
-          Add
+          {editingItem ? "Update" : "Add"}
         </Button>
       </Box>
       <List>
@@ -136,7 +192,7 @@ const ItemManager = () => {
           <Typography>Loading..,</Typography>
         ) : (
           items &&
-          items.map((item) => (
+          filteredItems.map((item) => (
             <ListItem
               key={item._id}
               divider
