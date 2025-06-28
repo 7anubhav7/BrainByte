@@ -93,7 +93,7 @@ const VideoAndAudienceCard = () => {
                   fontWeight: "bold",
                   fontSize: "16px",
                 }}
-                onClick={() => router.push("/dashboard/admin/create/course")}
+                onClick={() => router.push("/dashboard/admin/create/content")}
               >
                 Get Started
               </Button>
