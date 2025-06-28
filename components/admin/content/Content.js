@@ -25,7 +25,7 @@ const Content = () => {
       return;
     }
     try {
-      const response = await fetch(`${process.env.API}/Curriculum`, {
+      const response = await fetch(`${process.env.API}/admin/Curriculum`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
