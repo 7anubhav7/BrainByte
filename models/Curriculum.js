@@ -61,4 +61,4 @@ const CurriculumSchema = new mongoose.Schema(
 );
 
 export default mongoose.models.Curriculum ||
-  mongoose.models("Curriculum", CurriculumSchema);
+  mongoose.model("Curriculum", CurriculumSchema);

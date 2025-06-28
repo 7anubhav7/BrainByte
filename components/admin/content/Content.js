@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import ContentCard from "./ContentCard";
 
 const Content = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -21,9 +22,10 @@ const Content = () => {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert("Please enter the content title!");
+      alert("Please enter a course title.");
       return;
     }
+
     try {
       const response = await fetch(`${process.env.API}/admin/Curriculum`, {
         method: "POST",
@@ -34,14 +36,16 @@ const Content = () => {
       });
 
       if (response.ok) {
-        alert("Content added successfully!");
-        setTitle("");
-        handleClose();
+        alert("Course added successfully.");
+        setTitle(""); // Reset title input
+        handleClose(); // Close the dialog
       } else {
-        alert("Failed to fetch!");
+        console.log(response);
+        alert("Failed to add the course.");
       }
     } catch (error) {
-      alert("An error occured. Please try again!");
+      console.error("Error adding course:", error);
+      alert("An error occurred. Please try again.");
     }
   };
 
@@ -127,30 +131,34 @@ const Content = () => {
 
         <DialogActions>
           <Button
-            variant="contained"
             onClick={handleClose}
             sx={{
               color: "#fff",
               bgcolor: "red",
               ":hover": { bgcolor: "darkred" },
+              whiteSpace: "nowrap",
+              padding: "12px 24px",
+              fontSize: "1.1rem",
             }}
           >
             Cancel
           </Button>
-
           <Button
-            variant="contained"
             onClick={handleSave}
             sx={{
               color: "#fff",
               bgcolor: "purple",
               ":hover": { bgcolor: "darkviolet" },
+              whiteSpace: "nowrap",
+              padding: "12px 24px",
+              fontSize: "1.1rem",
             }}
           >
             Save
           </Button>
         </DialogActions>
       </Dialog>
+      <ContentCard />
     </>
   );
 };
