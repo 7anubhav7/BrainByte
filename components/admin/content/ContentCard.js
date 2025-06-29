@@ -19,6 +19,7 @@ import {
   TextField,
   Button,
   CircularProgress,
+  Icon,
 } from "@mui/material";
 
 import { useRouter } from "next/navigation";
@@ -49,6 +50,85 @@ const ContentCard = () => {
       console.log("ERROR-----------", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteOpen = (content) => {
+    setCurrentContent(content);
+    setDeleteOpen(true);
+  };
+
+  const handleDeleteClose = () => {
+    setDeleteOpen(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setActionLoading(true);
+      const response = await fetch(
+        `${process.env.API}/admin/Curriculum/${currentContent?._id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (response.ok) {
+        setContent((prev) =>
+          prev.filter((content) => content?._id !== currentContent?._id)
+        );
+        toast.success("Content deleted successfully!");
+        setDeleteOpen(false);
+      } else {
+        toast.error("Failed to delete content");
+      }
+    } catch (error) {
+      toast.error("Error deleting content!");
+      console.log("Error in Deleting DELETE PATH------", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditOpen = (content) => {
+    setCurrentContent(content);
+    setNewTitle(content?.title);
+    setEditOpen(true);
+  };
+
+  const handleEditClose = () => {
+    setEditOpen(false);
+  };
+
+  const handleEditSave = async () => {
+    try {
+      setActionLoading(true);
+      const response = await fetch(
+        `${process.env.API}/admin/Curriculum/${currentContent?._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ title: newTitle }),
+        }
+      );
+
+      if (response.ok) {
+        const updatedContent = await response.json();
+        setContent((prev) =>
+          prev.map((content) =>
+            content?._id === updatedContent?._id ? updatedContent : content
+          )
+        );
+        toast.success("Content updated successfully");
+        setEditOpen(false);
+      } else {
+        toast.error("Failed to update content!");
+      }
+    } catch (error) {
+      toast.error("Error updating content");
+      console.log("Error updating Handle Edit Save", error);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -143,7 +223,7 @@ const ContentCard = () => {
                 </Box>
 
                 <Typography
-                  variant="h6"
+                  variant="h4"
                   sx={{
                     fontWeight: "bold",
                     color: "#FFF",
@@ -153,9 +233,172 @@ const ContentCard = () => {
                 </Typography>
               </Box>
             </Grid>
+
+            <Grid
+              item
+              xs={6}
+              sx={{ display: "flex", justifyContent: "center" }}
+            >
+              {hoverIndex === index ? (
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Tooltip title="Source">
+                    <IconButton
+                      size="large"
+                      sx={{ color: "green" }}
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/admin/create/content/curriculumeditorcontent?search=${course._id}`
+                        )
+                      }
+                    >
+                      <SourceIcon sx={{ fontSize: "2.5rem" }} />
+                    </IconButton>
+                  </Tooltip>
+
+                  <Tooltip title="Edit">
+                    <IconButton
+                      size="small"
+                      sx={{ color: "purple" }}
+                      onClick={() => handleEditOpen(content)}
+                    >
+                      <EditIcon sx={{ fontSize: "2.5rem" }} />
+                    </IconButton>
+                  </Tooltip>
+
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      sx={{ color: "red" }}
+                      onClick={() => handleDeleteOpen(content)}
+                    >
+                      <DeleteForeverIcon sx={{ fontSize: "2.5rem" }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              ) : (
+                <Typography
+                  variant="body1"
+                  color="#fff"
+                  sx={{ fontWeight: "bold" }}
+                >
+                  Finish your Topic
+                </Typography>
+              )}
+            </Grid>
           </Grid>
         </Box>
       ))}
+
+      <Dialog
+        PaperProps={{
+          sx: {
+            bgcolor: "#212121",
+            color: "white",
+          },
+        }}
+        open={editOpen}
+        onClose={handleEditClose}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>Edit Course</DialogTitle>
+
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Content Title"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            InputLabelProps={{
+              sx: {
+                color: "#8A12FC",
+              },
+            }}
+            sx={{
+              input: { color: "white", fontSize: "1.2rem", height: "2rem" },
+
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: "#8A12FC" },
+                "&:hover fieldset": { borderColor: "#8A12FC" },
+                "&.Mui-focused fieldset": { borderColor: "#8A12FC" },
+              },
+            }}
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={handleEditClose}
+            sx={{
+              color: "#fff",
+              bgcolor: "red",
+            }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleEditSave}
+            sx={{
+              color: "#fff",
+              bgcolor: "purple",
+            }}
+            disabled={actionLoading}
+          >
+            {actionLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Save"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        PaperProps={{
+          sx: {
+            bgcolor: "#212121",
+            color: "white",
+          },
+        }}
+        open={deleteOpen}
+        onClose={handleDeleteClose}
+      >
+        <DialogTitle>Delete Content</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the course titled-{" "}
+            {currentContent?.title}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={handleDeleteClose}
+            sx={{
+              color: "#fff",
+              bgcolor: "purple",
+            }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={handleDeleteConfirm}
+            sx={{
+              color: "#fff",
+              bgcolor: "red",
+            }}
+            disabled={actionLoading}
+          >
+            {actionLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Delete"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
