@@ -247,7 +247,7 @@ const ContentCard = () => {
                       sx={{ color: "green" }}
                       onClick={() =>
                         router.push(
-                          `/dashboard/admin/create/content/curriculumeditorcontent?search=${course._id}`
+                          `/dashboard/admin/create/content/curriculumeditorcontent?search=${content._id}`
                         )
                       }
                     >
