@@ -35,7 +35,7 @@ const CurriculumEditor = () => {
   const [editSectionValue, setEditSectionValue] = useState("");
   const [editLectureValue, setEditLectureValue] = useState("");
   const [editing, setEditing] = useState(null);
-  const [deleteLecture, setDeleteLecture] = useState(null);
+  const [deletingLecture, setDeletingLecture] = useState(null);
   const [deletingSection, setDeletingSection] = useState("");
 
   const [sections, setSections] = useState([
@@ -115,7 +115,7 @@ const CurriculumEditor = () => {
         `${process.env.API}/admin/Curriculum/section`,
         {
           method: "POST",
-          header: {
+          headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
@@ -174,11 +174,203 @@ const CurriculumEditor = () => {
 
     if (type === "section") {
       setEditSectionValue(curriculum[sectionIndex]?.title);
-      alert(curriculum[sectionIndex]?.title);
     } else if (type === "lecture") {
       setEditLectureValue(
         curriculum[sectionIndex]?.lectures[LectureIndex]?.title
       );
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(null);
+    setEditSectionValue("");
+    setEditLectureValue("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (editing.type === "section") {
+      const updatedSection = {
+        ...curriculum[editing.sectionIndex],
+        title: editSectionValue,
+      };
+
+      const data = {
+        updatedSection,
+        search,
+      };
+
+      const response = await fetch(
+        `${process.env.API}/admin/Curriculum/section/${updatedSection?._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      console.log("update section", response);
+
+      if (response.ok) {
+        setCurriculum((prevSections) =>
+          prevSections.map((section, index) =>
+            index === editing.sectionIndex
+              ? { ...section, title: editSectionValue }
+              : section
+          )
+        );
+      } else {
+        console.log("Failed to update section");
+      }
+    } else if (editing.type === "lecture") {
+      const updatedSection = {
+        ...curriculum[editing.sectionIndex]?.lectures[editing.lectureIndex],
+        title: editLectureValue,
+      };
+
+      const sectionId = curriculum[editing.sectionIndex]?._id;
+
+      const data = {
+        updatedSection,
+        sectionId,
+        search,
+      };
+
+      console.log("save lecture", data);
+
+      const response = await fetch(
+        `${process.env.API}/admin/Curriculum/section/lecture/${
+          curriculum[editing.sectionIndex]?.lectures[editing.lectureIndex]?._id
+        }`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (response.ok) {
+        setCurriculum((prevSections) =>
+          prevSections.map((section, sectionIndex) =>
+            sectionIndex === editing.sectionIndex
+              ? {
+                  ...section,
+                  lectures: section?.lectures?.map((lecture, lectureIndex) =>
+                    lectureIndex === editing.lectureIndex
+                      ? { ...lecture, title: editLectureValue }
+                      : lecture
+                  ),
+                }
+              : section
+          )
+        );
+      } else {
+        console.log("Failed to update lecture");
+      }
+    }
+    handleCancelEdit();
+  };
+
+  const handleAddLecture = async (sectionIndex) => {
+    const lectureId = uuidv4();
+    const newLecture = {
+      idindex: lectureId,
+      title: "New Lecture",
+    };
+    const sectionId = curriculum[sectionIndex]?._id;
+    setCurriculum((prevSections) =>
+      prevSections.map((section, index) =>
+        index === sectionIndex
+          ? {
+              ...section,
+              lectures: [...section.lectures, newLecture],
+            }
+          : section
+      )
+    );
+
+    const data = {
+      newLecture,
+      search,
+      sectionId,
+    };
+
+    const response = await fetch(
+      `${process.env.API}/admin/Curriculum/section/lecture`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (response.ok) {
+      const savedLecture = await response.json();
+
+      setCurriculum((prevSections) =>
+        prevSections.map((section, index) => {
+          index === sectionIndex
+            ? {
+                ...section,
+                lectures: section.lectures.map((Lecture) =>
+                  Lecture.idindex === lectureId ? savedLecture : Lecture
+                ),
+              }
+            : section;
+        })
+      );
+    } else {
+      console.log("Failed to add lecture");
+    }
+  };
+
+  const handleDeleteLecture = async (sectionIndex, lectureId) => {
+    setDeletingLecture({ sectionIndex, lectureId });
+
+    console.log("deletingxxxx", { sectionIndex, lectureId });
+
+    const sectionId = curriculum[sectionIndex]?._id;
+
+    const data = {
+      sectionId,
+      search,
+    };
+
+    const response = await fetch(
+      `${process.env.API}/admin/Curriculum/section/lecture/${lectureId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    if (response.ok) {
+      setTimeout(() => {
+        setCurriculum((prevSections) =>
+          prevSections.map((section, index) =>
+            index === sectionIndex
+              ? {
+                  ...section,
+                  lectures: section?.lectures.filter(
+                    (lecture) => lecture._id !== lectureId
+                  ),
+                }
+              : section
+          )
+        );
+
+        setDeletingLecture(null);
+      }, 2000);
+    } else {
+      console.error("Failed to delete lecture");
     }
   };
 
@@ -227,6 +419,7 @@ const CurriculumEditor = () => {
                 border: "1px solid #E0E0E0",
                 padding: "16px",
                 borderRadius: "4px",
+                marginBottom: "16px",
               }}
             >
               {/* Combined title and icons in one horizontal row */}
@@ -249,7 +442,7 @@ const CurriculumEditor = () => {
                       color: "#FFFF",
                     }}
                   />
-                  Section {sectionIndex + 1} : {section.title}
+                  Section {sectionIndex + 1} : {section?.title}
                 </Typography>
 
                 <Box>
@@ -272,6 +465,75 @@ const CurriculumEditor = () => {
                 </Box>
               </Box>
 
+              {editing &&
+                editing.type === "section" &&
+                editing.sectionIndex === sectionIndex && (
+                  <Box
+                    sx={{
+                      marginTop: "16px",
+                    }}
+                  >
+                    <TextField
+                      fullWidth
+                      value={editSectionValue}
+                      onChange={(e) => setEditSectionValue(e.target.value)}
+                      sx={{
+                        marginBottom: "8px",
+                        backgroundColor: "#212121",
+                        borderRadius: "4px",
+                        color: "#fff",
+                        input: { color: "white" },
+
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": {
+                            borderColor: "#fff",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#fff",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#fff",
+                          },
+                        },
+                      }}
+                    />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        onClick={handleCancelEdit}
+                        sx={{
+                          marginRight: "8px",
+                          textTransform: "none",
+                          border: "1px solid #E0E0E0",
+                          color: "#FFF",
+                          backgroundColor: "#000",
+                        }}
+                      >
+                        Cancel
+                      </Button>
+
+                      <Button
+                        variant="contained"
+                        onClick={handleSaveEdit}
+                        sx={{
+                          textTransform: "none",
+                          border: "1px solid #E0E0E0",
+                          color: "#FFF",
+                          backgroundColor: "#000",
+                        }}
+                      >
+                        Save
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+
               <Box
                 sx={{
                   marginTop: "16px",
@@ -281,7 +543,11 @@ const CurriculumEditor = () => {
                   <Box
                     key={Lecture?._id}
                     sx={{
-                      backgroundColor: "#333",
+                      backgroundColor:
+                        deletingLecture?.sectionIndex === sectionIndex &&
+                        deletingLecture?.lectureId === Lecture?._id
+                          ? "red"
+                          : "#333",
                       padding: "16px",
                       borderRadius: "4px",
                       marginBottom: "8px",
@@ -345,7 +611,11 @@ const CurriculumEditor = () => {
                           />
                         </IconButton>
 
-                        <IconButton>
+                        <IconButton
+                          onClick={() =>
+                            handleDeleteLecture(sectionIndex, Lecture._id)
+                          }
+                        >
                           <DeleteIcon
                             sx={{
                               color: "#fff",
@@ -356,6 +626,20 @@ const CurriculumEditor = () => {
                     </Box>
                   </Box>
                 ))}
+
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => handleAddLecture(sectionIndex)}
+                  sx={{
+                    marginTop: "8px",
+                    color: "#ffff",
+                    backgroundColor: "#000",
+                    textTransform: "none",
+                  }}
+                >
+                  Add Lecture
+                </Button>
               </Box>
             </Box>
           ))}

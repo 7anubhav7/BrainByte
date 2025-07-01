@@ -27,10 +27,8 @@ export async function GET() {
 
   try {
     const curriculums = await Curriculum.find({}).sort({ createdAt: -1 });
-    console.log("GET REQ DATA FETCHED--", curriculums);
     return NextResponse.json(curriculums);
   } catch (error) {
-    console.log("ERROR FETCHING GET-----", error);
     return NextResponse.json({ err: error.message }, { status: 500 });
   }
 }
