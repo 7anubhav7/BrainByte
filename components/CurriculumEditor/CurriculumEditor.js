@@ -11,6 +11,12 @@ import AddIcon from "@mui/icons-material/Add";
 import DescriptionIcon from "@mui/icons-material/Description";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import hljs from "highlight.js";
+import MarkdownIt from "markdown-it";
+import MdEditor from "react-markdown-editor-lite";
+// import style manually
+import "react-markdown-editor-lite/lib/index.css";
+import { imageUpload } from "@/components/functions/Upload";
 
 import {
   Box,
@@ -24,7 +30,7 @@ import {
 
 import Sidebar from "../sidebar/SideBar";
 import { useSearchParams } from "next/navigation";
-import { Note } from "@mui/icons-material";
+import { Height, Note } from "@mui/icons-material";
 
 const CurriculumEditor = () => {
   const searchParams = useSearchParams();
@@ -171,9 +177,18 @@ const CurriculumEditor = () => {
 
   const startEditing = (type, sectionIndex, LectureIndex = null) => {
     setEditing({ type, sectionIndex, LectureIndex });
-
+    console.log("Thing sent to start edting fn-----", {
+      type,
+      sectionIndex,
+      LectureIndex,
+    });
     if (type === "section") {
       setEditSectionValue(curriculum[sectionIndex]?.title);
+      console.log(
+        "The val passed into setEditSectionValue state-----",
+        curriculum[sectionIndex]?.title
+      );
+      console.log("editSectionValue state-----", editSectionValue);
     } else if (type === "lecture") {
       setEditLectureValue(
         curriculum[sectionIndex]?.lectures[LectureIndex]?.title
@@ -188,6 +203,7 @@ const CurriculumEditor = () => {
   };
 
   const handleSaveEdit = async () => {
+    //For Section part
     if (editing.type === "section") {
       const updatedSection = {
         ...curriculum[editing.sectionIndex],
@@ -223,9 +239,11 @@ const CurriculumEditor = () => {
       } else {
         console.log("Failed to update section");
       }
-    } else if (editing.type === "lecture") {
+    }
+    //For Lecture part
+    else if (editing.type === "lecture") {
       const updatedSection = {
-        ...curriculum[editing.sectionIndex]?.lectures[editing.lectureIndex],
+        ...curriculum[editing.sectionIndex]?.lectures[editing.LectureIndex],
         title: editLectureValue,
       };
 
@@ -241,7 +259,7 @@ const CurriculumEditor = () => {
 
       const response = await fetch(
         `${process.env.API}/admin/Curriculum/section/lecture/${
-          curriculum[editing.sectionIndex]?.lectures[editing.lectureIndex]?._id
+          curriculum[editing.sectionIndex]?.lectures[editing.LectureIndex]?._id
         }`,
         {
           method: "PUT",
@@ -258,10 +276,10 @@ const CurriculumEditor = () => {
             sectionIndex === editing.sectionIndex
               ? {
                   ...section,
-                  lectures: section?.lectures?.map((lecture, lectureIndex) =>
-                    lectureIndex === editing.lectureIndex
-                      ? { ...lecture, title: editLectureValue }
-                      : lecture
+                  lectures: section?.lectures?.map((Lecture, LectureIndex) =>
+                    LectureIndex === editing.lectureIndex
+                      ? { ...Lecture, title: editLectureValue }
+                      : Lecture
                   ),
                 }
               : section
@@ -372,6 +390,81 @@ const CurriculumEditor = () => {
     } else {
       console.error("Failed to delete lecture");
     }
+  };
+
+  const [openModal, setOpenModal] = useState(false);
+  const [currentLecture, setCurrentLecture] = useState(null);
+  const [content, setContent] = useState("");
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(null);
+
+  const handleOpenModal = (Lecture, sectionIndex) => {
+    setCurrentSectionIndex(sectionIndex);
+    setCurrentLecture(Lecture);
+    setContent(Lecture?.content || "");
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setCurrentLecture(null);
+    setContent("");
+    setCurrentSectionIndex(null);
+  };
+
+  const md = new MarkdownIt({
+    html: true,
+    linkify: true,
+    typographer: true,
+    highlight: (str, lang) => {
+      const language = lang && hljs.getLanguage(lang) ? lang : "js";
+      try {
+        const highlightedCode = hljs.highlight(language, str, true).value;
+        return `<pre class="hljs"><code>${highlightedCode}</code></pre>`;
+      } catch (error) {
+        return ""; // Return an empty string if highlighting fails
+      }
+    },
+  });
+
+  const handleSaveContent = async () => {
+    const sectionId = curriculum[currentSectionIndex]?._id;
+    const lecturebody = {
+      ...currentLecture,
+      content,
+    };
+    const data = {
+      lecturebody,
+      sectionId,
+      search,
+    };
+    const response = await fetch(
+      `${process.env.API}/admin/Curriculum/section/lecture/content/${lecture?._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    if (response.ok) {
+      setCurriculum((prevSections) =>
+        prevSections.map((section) => ({
+          ...section,
+          lectures: section?.lectures.map((Lecture) => {
+            Lecture?._id === currentLecture?._id
+              ? {
+                  ...Lecture,
+                  content,
+                }
+              : Lecture;
+          }),
+        }))
+      );
+    } else {
+      console.log("Failed to update");
+    }
+    handleCloseModal();
   };
 
   return (
@@ -571,7 +664,9 @@ const CurriculumEditor = () => {
                       </Typography>
 
                       <Box>
-                        <IconButton>
+                        <IconButton
+                          onClick={() => handleOpenModal(Lecture, sectionIndex)}
+                        >
                           {Lecture?.content ? (
                             <LibraryAddCheckIcon
                               sx={{
@@ -603,7 +698,11 @@ const CurriculumEditor = () => {
                           )}
                         </IconButton>
 
-                        <IconButton>
+                        <IconButton
+                          onClick={() =>
+                            startEditing("lecture", sectionIndex, LectureIndex)
+                          }
+                        >
                           <EditIcon
                             sx={{
                               color: "#fff",
@@ -624,6 +723,79 @@ const CurriculumEditor = () => {
                         </IconButton>
                       </Box>
                     </Box>
+
+                    {/* Lecture editing below the lecture title */}
+                    {editing &&
+                      editing.type === "lecture" &&
+                      editing.sectionIndex === sectionIndex &&
+                      editing.LectureIndex === LectureIndex && (
+                        <Box sx={{ marginTop: "16px" }}>
+                          <TextField
+                            fullWidth
+                            value={editLectureValue || ""}
+                            onChange={(e) =>
+                              setEditLectureValue(e.target.value)
+                            }
+                            sx={{
+                              marginBottom: "8px",
+                              backgroundColor: "#212121",
+                              borderRadius: "4px",
+                              color: "#fff",
+                              input: { color: "white" },
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": {
+                                  borderColor: "#fff",
+                                },
+                                "&:hover fieldset": {
+                                  borderColor: "#fff",
+                                },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#fff",
+                                },
+                              },
+                            }}
+                          />
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                            }}
+                          ></Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                            }}
+                          >
+                            <Button
+                              variant="contained"
+                              onClick={handleCancelEdit}
+                              sx={{
+                                marginRight: "8px",
+                                textTransform: "none",
+                                border: "1px solid #E0E0E0",
+                                color: "#FFFFFF",
+                                backgroundColor: "#000",
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="contained"
+                              onClick={handleSaveEdit}
+                              sx={{
+                                color: "#FFFFFF",
+                                backgroundColor: "#000",
+                                textTransform: "none",
+                                border: "1px solid #E0E0E0",
+                              }}
+                            >
+                              Save Lecture
+                            </Button>
+                          </Box>
+                        </Box>
+                      )}
                   </Box>
                 ))}
 
@@ -657,6 +829,59 @@ const CurriculumEditor = () => {
         >
           Add Section
         </Button>
+
+        <Modal open={openModal} onClose={handleCloseModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%,-50%)",
+              width: "80%",
+              bgcolor: "#212121",
+              border: "2px solid #000",
+              p: 4,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 2,
+              }}
+            >
+              Edit Lecture {currentLecture?.title}
+            </Typography>
+
+            <MdEditor
+              value={content}
+              style={{
+                height: "80vh", // Set the editor height
+              }}
+              // renderHTML={(text) => new MarkdownIt().render(text)}
+              onChange={({ text }) => setContent(text)}
+              renderHTML={(text) => md.render(text)} // Use the initialized md
+              onImageUpload={(file) => imageUpload(file)}
+              placeholder="Write your Content here..."
+            />
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+              <Button
+                variant="outlined"
+                onClick={handleCloseModal}
+                sx={{ marginRight: "8px" }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSaveContent}
+                sx={{ color: "#fff", backgroundColor: "#000" }}
+              >
+                Save
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
       </Box>
 
       <Sidebar />
