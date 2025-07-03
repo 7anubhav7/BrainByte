@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 
 import { v4 as uuidv4 } from "uuid";
 import LibraryAddCheckIcon from "@mui/icons-material/LibraryAddCheck";
@@ -14,6 +14,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import hljs from "highlight.js";
 import MarkdownIt from "markdown-it";
 import MdEditor from "react-markdown-editor-lite";
+import React from "react";
+import ReactPlayer from "react-player";
 // import style manually
 import "react-markdown-editor-lite/lib/index.css";
 import { imageUpload } from "@/components/functions/Upload";
@@ -43,6 +45,8 @@ const CurriculumEditor = () => {
   const [editing, setEditing] = useState(null);
   const [deletingLecture, setDeletingLecture] = useState(null);
   const [deletingSection, setDeletingSection] = useState("");
+  const [videourl, setVideourl] = useState("");
+  const [openVideoModal, setOpenVideoModal] = useState(false);
 
   const [sections, setSections] = useState([
     {
@@ -438,7 +442,7 @@ const CurriculumEditor = () => {
       search,
     };
     const response = await fetch(
-      `${process.env.API}/admin/Curriculum/section/lecture/content/${lecture?._id}`,
+      `${process.env.API}/admin/Curriculum/section/lecture/content/${lecturebody?._id}`,
       {
         method: "PUT",
         headers: {
@@ -465,6 +469,61 @@ const CurriculumEditor = () => {
       console.log("Failed to update");
     }
     handleCloseModal();
+  };
+
+  const handleOpenVideoModal = (Lecture, sectionIndex) => {
+    setCurrentSectionIndex(sectionIndex);
+    setCurrentLecture(Lecture);
+    setVideourl(Lecture.videourl || "");
+    setOpenVideoModal(true);
+  };
+
+  const handleCloseVideoModal = () => {
+    setOpenVideoModal(false);
+    setCurrentLecture(null);
+    setVideourl("");
+    setCurrentSectionIndex(null);
+  };
+
+  const handleSaveVideoContent = async () => {
+    const sectionId = curriculum[currentSectionIndex]?._id;
+    const lecturebody = {
+      ...currentLecture,
+      videourl,
+    };
+    const data = {
+      lecturebody,
+      sectionId,
+      search,
+    };
+    const response = await fetch(
+      `${process.env.API}/admin/Curriculum/section/lecture/content/${lecturebody?._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    if (response.ok) {
+      setCurriculum((prevSections) =>
+        prevSections.map((section) => ({
+          ...section,
+          lectures: section?.lectures.map((Lecture) => {
+            Lecture?._id === currentLecture?._id
+              ? {
+                  ...Lecture,
+                  videourl,
+                }
+              : Lecture;
+          }),
+        }))
+      );
+    } else {
+      console.log("Failed to update video content");
+    }
+    handleCloseVideoModal();
   };
 
   return (
@@ -682,7 +741,11 @@ const CurriculumEditor = () => {
                           )}
                         </IconButton>
 
-                        <IconButton>
+                        <IconButton
+                          onClick={() =>
+                            handleOpenVideoModal(Lecture, sectionIndex)
+                          }
+                        >
                           {Lecture?.videourl ? (
                             <OndemandVideoIcon
                               sx={{
@@ -873,8 +936,96 @@ const CurriculumEditor = () => {
                 Cancel
               </Button>
               <Button
-                variant="contained"
+                variant="outlined"
                 onClick={handleSaveContent}
+                sx={{ color: "#fff", backgroundColor: "#000" }}
+              >
+                Save
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Modal for editing lecture video content */}
+        <Modal open={openVideoModal} onClose={handleCloseVideoModal}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "80%",
+              bgcolor: "#212121",
+              border: "2px solid #000",
+              // boxShadow: 24,
+              p: 4,
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Edit Lecture{"   "}
+              {currentLecture?.title}
+            </Typography>
+
+            <TextField
+              label="Add VideoURL"
+              variant="outlined"
+              fullWidth
+              value={videourl}
+              onChange={(e) => setVideourl(e.target.value)}
+              InputLabelProps={{
+                style: { color: "#8A12FC" },
+              }}
+              sx={{
+                input: { color: "white" },
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "#8A12FC",
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#8A12FC",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#8A12FC",
+                  },
+                },
+              }}
+            />
+
+            {currentLecture && currentLecture.videourl ? (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "80vh",
+                  padding: "16px",
+                  backgroundColor: "#212121",
+                }}
+              >
+                <ReactPlayer
+                  src={currentLecture.videourl}
+                  width="100%"
+                  height="100%"
+                  controls
+                  light={true}
+                  playing={false}
+                />
+              </Box>
+            ) : (
+              <Box sx={{ padding: "16px", textAlign: "center" }}>
+                <p>No video available for this lecture.</p>
+              </Box>
+            )}
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+              <Button
+                variant="outlined"
+                onClick={handleCloseVideoModal}
+                sx={{ marginRight: "8px" }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSaveVideoContent}
                 sx={{ color: "#fff", backgroundColor: "#000" }}
               >
                 Save
