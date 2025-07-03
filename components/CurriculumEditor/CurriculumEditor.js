@@ -281,7 +281,7 @@ const CurriculumEditor = () => {
               ? {
                   ...section,
                   lectures: section?.lectures?.map((Lecture, LectureIndex) =>
-                    LectureIndex === editing.lectureIndex
+                    LectureIndex === editing.LectureIndex
                       ? { ...Lecture, title: editLectureValue }
                       : Lecture
                   ),
@@ -336,14 +336,13 @@ const CurriculumEditor = () => {
 
       setCurriculum((prevSections) =>
         prevSections.map((section, index) => {
-          index === sectionIndex
-            ? {
-                ...section,
-                lectures: section.lectures.map((Lecture) =>
-                  Lecture.idindex === lectureId ? savedLecture : Lecture
-                ),
-              }
-            : section;
+          if (index !== sectionIndex) return section;
+          return {
+            ...section,
+            lectures: section.lectures.map((lecture) =>
+              lecture.idindex === lectureId ? savedLecture : lecture
+            ),
+          };
         })
       );
     } else {
@@ -693,7 +692,7 @@ const CurriculumEditor = () => {
               >
                 {section?.lectures?.map((Lecture, LectureIndex) => (
                   <Box
-                    key={Lecture?._id}
+                    key={Lecture?._id || Lecture?.idindex}
                     sx={{
                       backgroundColor:
                         deletingLecture?.sectionIndex === sectionIndex &&
