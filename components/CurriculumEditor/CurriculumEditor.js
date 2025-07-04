@@ -69,6 +69,51 @@ const DraggableSection = ({ section, index, moveSection, children }) => {
   );
 };
 
+const DraggableLecture = ({
+  lecture,
+  sectionIndex,
+  lectureIndex,
+  moveLecture,
+  children,
+}) => {
+  const [, ref] = useDrag({
+    type: ItemTypes.LECTURE,
+    item: {
+      sectionIndex,
+      lectureIndex,
+    },
+  });
+  const [, drop] = useDrop({
+    accept: ItemTypes.LECTURE,
+    hover: (draggedItem) => {
+      if (
+        draggedItem.sectionIndex != sectionIndex ||
+        draggedItem.lectureIndex != lectureIndex
+      ) {
+        moveLecture(
+          draggedItem.sectionIndex,
+          draggedItem.lectureIndex,
+          sectionIndex,
+          lectureIndex
+        );
+        draggedItem.sectionIndex = sectionIndex;
+        draggedItem.lectureIndex - lectureIndex;
+      }
+    },
+  });
+
+  return (
+    <Box
+      ref={(node) => ref(drop(node))}
+      sx={{
+        marginBottom: "8px",
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
+
 const CurriculumEditor = () => {
   const searchParams = useSearchParams();
   const search = searchParams.get("search");
@@ -454,6 +499,54 @@ const CurriculumEditor = () => {
     }
   };
 
+  const moveLecture = async (
+    fromSectionIndex,
+    fromLectureIndex,
+    toSectionIndex,
+    toLectureIndex
+  ) => {
+    console.log("Data sent to moveLecture fn-----", {
+      fromSectionIndex,
+      fromLectureIndex,
+      toSectionIndex,
+      toLectureIndex,
+    });
+
+    const updatedSections = [...curriculum];
+    const [movedLecture] = updatedSections[fromSectionIndex].lectures.splice(
+      fromLectureIndex,
+      1
+    );
+
+    updatedSections[toSectionIndex].lectures.splice(
+      toLectureIndex,
+      0,
+      movedLecture
+    );
+
+    setCurriculum(updatedSections);
+    try {
+      await fetch(
+        `${process.env.API}/admin/Curriculum/section/lecture/updateLectureOrder`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sections: updatedSections,
+            search,
+          }),
+        }
+      );
+    } catch (error) {
+      console.log(
+        "error updating lecture order from moveLecture fn------",
+        error
+      );
+    }
+  };
+
   const [openModal, setOpenModal] = useState(false);
   const [currentLecture, setCurrentLecture] = useState(null);
   const [content, setContent] = useState("");
@@ -759,180 +852,188 @@ const CurriculumEditor = () => {
                     }}
                   >
                     {section?.lectures?.map((Lecture, LectureIndex) => (
-                      <Box
-                        key={Lecture?._id || Lecture?.idindex}
-                        sx={{
-                          backgroundColor:
-                            deletingLecture?.sectionIndex === sectionIndex &&
-                            deletingLecture?.lectureId === Lecture?._id
-                              ? "red"
-                              : "#333",
-                          padding: "16px",
-                          borderRadius: "4px",
-                          marginBottom: "8px",
-                          border: "1px solid #E0E0E0",
-                        }}
+                      <DraggableLecture
+                        key={Lecture?.idindex}
+                        sectionIndex={sectionIndex}
+                        lectureIndex={LectureIndex}
+                        lecture={Lecture}
+                        moveLecture={moveLecture}
                       >
                         <Box
+                          key={Lecture?._id || Lecture?.idindex}
                           sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
+                            backgroundColor:
+                              deletingLecture?.sectionIndex === sectionIndex &&
+                              deletingLecture?.lectureId === Lecture?._id
+                                ? "red"
+                                : "#333",
+                            padding: "16px",
+                            borderRadius: "4px",
+                            marginBottom: "8px",
+                            border: "1px solid #E0E0E0",
                           }}
                         >
-                          <Typography
+                          <Box
                             sx={{
-                              color: "#fff",
-                              fontWeight: "bold",
-                              marginBottom: "8px",
+                              display: "flex",
+                              justifyContent: "space-between",
                             }}
                           >
-                            Lecture {LectureIndex + 1} : {Lecture?.title}
-                          </Typography>
-
-                          <Box>
-                            <IconButton
-                              onClick={() =>
-                                handleOpenModal(Lecture, sectionIndex)
-                              }
+                            <Typography
+                              sx={{
+                                color: "#fff",
+                                fontWeight: "bold",
+                                marginBottom: "8px",
+                              }}
                             >
-                              {Lecture?.content ? (
-                                <LibraryAddCheckIcon
-                                  sx={{
-                                    color: "#fff",
-                                  }}
-                                />
-                              ) : (
-                                <NotesIcon
-                                  sx={{
-                                    color: "#fff",
-                                  }}
-                                />
-                              )}
-                            </IconButton>
+                              Lecture {LectureIndex + 1} : {Lecture?.title}
+                            </Typography>
 
-                            <IconButton
-                              onClick={() =>
-                                handleOpenVideoModal(Lecture, sectionIndex)
-                              }
-                            >
-                              {Lecture?.videourl ? (
-                                <OndemandVideoIcon
-                                  sx={{
-                                    color: "#fff",
-                                  }}
-                                />
-                              ) : (
-                                <PersonalVideoIcon
-                                  sx={{
-                                    color: "#fff",
-                                  }}
-                                />
-                              )}
-                            </IconButton>
-
-                            <IconButton
-                              onClick={() =>
-                                startEditing(
-                                  "lecture",
-                                  sectionIndex,
-                                  LectureIndex
-                                )
-                              }
-                            >
-                              <EditIcon
-                                sx={{
-                                  color: "#fff",
-                                }}
-                              />
-                            </IconButton>
-
-                            <IconButton
-                              onClick={() =>
-                                handleDeleteLecture(sectionIndex, Lecture._id)
-                              }
-                            >
-                              <DeleteIcon
-                                sx={{
-                                  color: "#fff",
-                                }}
-                              />
-                            </IconButton>
-                          </Box>
-                        </Box>
-
-                        {/* Lecture editing below the lecture title */}
-                        {editing &&
-                          editing.type === "lecture" &&
-                          editing.sectionIndex === sectionIndex &&
-                          editing.LectureIndex === LectureIndex && (
-                            <Box sx={{ marginTop: "16px" }}>
-                              <TextField
-                                fullWidth
-                                value={editLectureValue || ""}
-                                onChange={(e) =>
-                                  setEditLectureValue(e.target.value)
+                            <Box>
+                              <IconButton
+                                onClick={() =>
+                                  handleOpenModal(Lecture, sectionIndex)
                                 }
-                                sx={{
-                                  marginBottom: "8px",
-                                  backgroundColor: "#212121",
-                                  borderRadius: "4px",
-                                  color: "#fff",
-                                  input: { color: "white" },
-                                  "& .MuiOutlinedInput-root": {
-                                    "& fieldset": {
-                                      borderColor: "#fff",
-                                    },
-                                    "&:hover fieldset": {
-                                      borderColor: "#fff",
-                                    },
-                                    "&.Mui-focused fieldset": {
-                                      borderColor: "#fff",
-                                    },
-                                  },
-                                }}
-                              />
-
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "flex-end",
-                                }}
-                              ></Box>
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "flex-end",
-                                }}
                               >
-                                <Button
-                                  variant="contained"
-                                  onClick={handleCancelEdit}
+                                {Lecture?.content ? (
+                                  <LibraryAddCheckIcon
+                                    sx={{
+                                      color: "#fff",
+                                    }}
+                                  />
+                                ) : (
+                                  <NotesIcon
+                                    sx={{
+                                      color: "#fff",
+                                    }}
+                                  />
+                                )}
+                              </IconButton>
+
+                              <IconButton
+                                onClick={() =>
+                                  handleOpenVideoModal(Lecture, sectionIndex)
+                                }
+                              >
+                                {Lecture?.videourl ? (
+                                  <OndemandVideoIcon
+                                    sx={{
+                                      color: "#fff",
+                                    }}
+                                  />
+                                ) : (
+                                  <PersonalVideoIcon
+                                    sx={{
+                                      color: "#fff",
+                                    }}
+                                  />
+                                )}
+                              </IconButton>
+
+                              <IconButton
+                                onClick={() =>
+                                  startEditing(
+                                    "lecture",
+                                    sectionIndex,
+                                    LectureIndex
+                                  )
+                                }
+                              >
+                                <EditIcon
                                   sx={{
-                                    marginRight: "8px",
-                                    textTransform: "none",
-                                    border: "1px solid #E0E0E0",
-                                    color: "#FFFFFF",
-                                    backgroundColor: "#000",
+                                    color: "#fff",
                                   }}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  variant="contained"
-                                  onClick={handleSaveEdit}
+                                />
+                              </IconButton>
+
+                              <IconButton
+                                onClick={() =>
+                                  handleDeleteLecture(sectionIndex, Lecture._id)
+                                }
+                              >
+                                <DeleteIcon
                                   sx={{
-                                    color: "#FFFFFF",
-                                    backgroundColor: "#000",
-                                    textTransform: "none",
-                                    border: "1px solid #E0E0E0",
+                                    color: "#fff",
                                   }}
-                                >
-                                  Save Lecture
-                                </Button>
-                              </Box>
+                                />
+                              </IconButton>
                             </Box>
-                          )}
-                      </Box>
+                          </Box>
+
+                          {/* Lecture editing below the lecture title */}
+                          {editing &&
+                            editing.type === "lecture" &&
+                            editing.sectionIndex === sectionIndex &&
+                            editing.LectureIndex === LectureIndex && (
+                              <Box sx={{ marginTop: "16px" }}>
+                                <TextField
+                                  fullWidth
+                                  value={editLectureValue || ""}
+                                  onChange={(e) =>
+                                    setEditLectureValue(e.target.value)
+                                  }
+                                  sx={{
+                                    marginBottom: "8px",
+                                    backgroundColor: "#212121",
+                                    borderRadius: "4px",
+                                    color: "#fff",
+                                    input: { color: "white" },
+                                    "& .MuiOutlinedInput-root": {
+                                      "& fieldset": {
+                                        borderColor: "#fff",
+                                      },
+                                      "&:hover fieldset": {
+                                        borderColor: "#fff",
+                                      },
+                                      "&.Mui-focused fieldset": {
+                                        borderColor: "#fff",
+                                      },
+                                    },
+                                  }}
+                                />
+
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "flex-end",
+                                  }}
+                                ></Box>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "flex-end",
+                                  }}
+                                >
+                                  <Button
+                                    variant="contained"
+                                    onClick={handleCancelEdit}
+                                    sx={{
+                                      marginRight: "8px",
+                                      textTransform: "none",
+                                      border: "1px solid #E0E0E0",
+                                      color: "#FFFFFF",
+                                      backgroundColor: "#000",
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    variant="contained"
+                                    onClick={handleSaveEdit}
+                                    sx={{
+                                      color: "#FFFFFF",
+                                      backgroundColor: "#000",
+                                      textTransform: "none",
+                                      border: "1px solid #E0E0E0",
+                                    }}
+                                  >
+                                    Save Lecture
+                                  </Button>
+                                </Box>
+                              </Box>
+                            )}
+                        </Box>
+                      </DraggableLecture>
                     ))}
 
                     <Button
