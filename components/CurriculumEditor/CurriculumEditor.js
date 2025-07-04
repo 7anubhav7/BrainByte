@@ -18,6 +18,8 @@ import React from "react";
 import ReactPlayer from "react-player";
 // import style manually
 import "react-markdown-editor-lite/lib/index.css";
+import { useDrag, useDrop, DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { imageUpload } from "@/components/functions/Upload";
 
 import {
@@ -33,6 +35,39 @@ import {
 import Sidebar from "../sidebar/SideBar";
 import { useSearchParams } from "next/navigation";
 import { Height, Note } from "@mui/icons-material";
+
+const ItemTypes = {
+  SECTION: "section",
+  LECTURE: "lecture",
+};
+
+const DraggableSection = ({ section, index, moveSection, children }) => {
+  const [, ref] = useDrag({
+    type: ItemTypes.SECTION,
+    item: { index, sectionId: section._id },
+  });
+
+  const [, drop] = useDrop({
+    accept: ItemTypes.SECTION,
+    hover: (draggedItem) => {
+      if (draggedItem.index !== index) {
+        moveSection(draggedItem.index, index);
+        draggedItem.index = index;
+      }
+    },
+  });
+
+  return (
+    <Box
+      ref={(node) => ref(drop(node))}
+      sx={{
+        marginBottom: "16px",
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
 
 const CurriculumEditor = () => {
   const searchParams = useSearchParams();
@@ -395,6 +430,30 @@ const CurriculumEditor = () => {
     }
   };
 
+  const moveSection = async (fromIndex, toIndex) => {
+    console.log("From Index to To Index", { fromIndex, toIndex });
+
+    const updatedSections = [...curriculum];
+    const [movedSection] = updatedSections.splice(fromIndex, 1);
+    updatedSections.splice(toIndex, 0, movedSection);
+    setCurriculum(updatedSections);
+
+    try {
+      await fetch(
+        `${process.env.API}/admin/Curriculum/section/updateSectionOrder`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sections: updatedSections, search }),
+        }
+      );
+    } catch (error) {
+      console.log("error from moveSection fn-------", error);
+    }
+  };
+
   const [openModal, setOpenModal] = useState(false);
   const [currentLecture, setCurrentLecture] = useState(null);
   const [content, setContent] = useState("");
@@ -550,489 +609,506 @@ const CurriculumEditor = () => {
         </Typography>
       </Box>
 
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "800px",
-          margin: "0 auto",
-          padding: "16px",
-          backgroundColor: "#212121",
-          border: "1px solid #E0E0E0",
-        }}
-      >
-        {curriculum &&
-          curriculum?.map((section, sectionIndex) => (
-            <Box
-              key={section?._id}
-              sx={{
-                backgroundColor:
-                  deletingSection === section?._id ? "red" : "#212121",
-                border: "1px solid #E0E0E0",
-                padding: "16px",
-                borderRadius: "4px",
-                marginBottom: "16px",
-              }}
-            >
-              {/* Combined title and icons in one horizontal row */}
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "16px",
-                }}
+      <DndProvider backend={HTML5Backend}>
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "800px",
+            margin: "0 auto",
+            padding: "16px",
+            backgroundColor: "#212121",
+            border: "1px solid #E0E0E0",
+          }}
+        >
+          {curriculum &&
+            curriculum?.map((section, sectionIndex) => (
+              <DraggableSection
+                key={section?.idindex}
+                section={section}
+                index={sectionIndex}
+                moveSection={moveSection}
               >
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="bold"
-                  sx={{ display: "flex", alignItems: "center" }}
+                <Box
+                  key={section?._id}
+                  sx={{
+                    backgroundColor:
+                      deletingSection === section?._id ? "red" : "#212121",
+                    border: "1px solid #E0E0E0",
+                    padding: "16px",
+                    borderRadius: "4px",
+                    marginBottom: "16px",
+                  }}
                 >
-                  <DescriptionIcon
+                  {/* Combined title and icons in one horizontal row */}
+                  <Box
                     sx={{
-                      marginRight: "8px",
-                      color: "#FFFF",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "16px",
                     }}
-                  />
-                  Section {sectionIndex + 1} : {section?.title}
-                </Typography>
-
-                <Box>
-                  <IconButton
-                    onClick={() => startEditing("section", sectionIndex)}
                   >
-                    <EditIcon
-                      sx={{
-                        color: "#FFF",
-                      }}
-                    />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteSection(section?._id)}>
-                    <DeleteIcon
-                      sx={{
-                        color: "#FFF",
-                      }}
-                    />
-                  </IconButton>
-                </Box>
-              </Box>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight="bold"
+                      sx={{ display: "flex", alignItems: "center" }}
+                    >
+                      <DescriptionIcon
+                        sx={{
+                          marginRight: "8px",
+                          color: "#FFFF",
+                        }}
+                      />
+                      Section {sectionIndex + 1} : {section?.title}
+                    </Typography>
 
-              {editing &&
-                editing.type === "section" &&
-                editing.sectionIndex === sectionIndex && (
+                    <Box>
+                      <IconButton
+                        onClick={() => startEditing("section", sectionIndex)}
+                      >
+                        <EditIcon
+                          sx={{
+                            color: "#FFF",
+                          }}
+                        />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleDeleteSection(section?._id)}
+                      >
+                        <DeleteIcon
+                          sx={{
+                            color: "#FFF",
+                          }}
+                        />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  {editing &&
+                    editing.type === "section" &&
+                    editing.sectionIndex === sectionIndex && (
+                      <Box
+                        sx={{
+                          marginTop: "16px",
+                        }}
+                      >
+                        <TextField
+                          fullWidth
+                          value={editSectionValue}
+                          onChange={(e) => setEditSectionValue(e.target.value)}
+                          sx={{
+                            marginBottom: "8px",
+                            backgroundColor: "#212121",
+                            borderRadius: "4px",
+                            color: "#fff",
+                            input: { color: "white" },
+
+                            "& .MuiOutlinedInput-root": {
+                              "& fieldset": {
+                                borderColor: "#fff",
+                              },
+                              "&:hover fieldset": {
+                                borderColor: "#fff",
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#fff",
+                              },
+                            },
+                          }}
+                        />
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                          }}
+                        >
+                          <Button
+                            variant="contained"
+                            onClick={handleCancelEdit}
+                            sx={{
+                              marginRight: "8px",
+                              textTransform: "none",
+                              border: "1px solid #E0E0E0",
+                              color: "#FFF",
+                              backgroundColor: "#000",
+                            }}
+                          >
+                            Cancel
+                          </Button>
+
+                          <Button
+                            variant="contained"
+                            onClick={handleSaveEdit}
+                            sx={{
+                              textTransform: "none",
+                              border: "1px solid #E0E0E0",
+                              color: "#FFF",
+                              backgroundColor: "#000",
+                            }}
+                          >
+                            Save
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
+
                   <Box
                     sx={{
                       marginTop: "16px",
                     }}
                   >
-                    <TextField
-                      fullWidth
-                      value={editSectionValue}
-                      onChange={(e) => setEditSectionValue(e.target.value)}
-                      sx={{
-                        marginBottom: "8px",
-                        backgroundColor: "#212121",
-                        borderRadius: "4px",
-                        color: "#fff",
-                        input: { color: "white" },
-
-                        "& .MuiOutlinedInput-root": {
-                          "& fieldset": {
-                            borderColor: "#fff",
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "#fff",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#fff",
-                          },
-                        },
-                      }}
-                    />
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                      }}
-                    >
-                      <Button
-                        variant="contained"
-                        onClick={handleCancelEdit}
+                    {section?.lectures?.map((Lecture, LectureIndex) => (
+                      <Box
+                        key={Lecture?._id || Lecture?.idindex}
                         sx={{
-                          marginRight: "8px",
-                          textTransform: "none",
-                          border: "1px solid #E0E0E0",
-                          color: "#FFF",
-                          backgroundColor: "#000",
-                        }}
-                      >
-                        Cancel
-                      </Button>
-
-                      <Button
-                        variant="contained"
-                        onClick={handleSaveEdit}
-                        sx={{
-                          textTransform: "none",
-                          border: "1px solid #E0E0E0",
-                          color: "#FFF",
-                          backgroundColor: "#000",
-                        }}
-                      >
-                        Save
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-
-              <Box
-                sx={{
-                  marginTop: "16px",
-                }}
-              >
-                {section?.lectures?.map((Lecture, LectureIndex) => (
-                  <Box
-                    key={Lecture?._id || Lecture?.idindex}
-                    sx={{
-                      backgroundColor:
-                        deletingLecture?.sectionIndex === sectionIndex &&
-                        deletingLecture?.lectureId === Lecture?._id
-                          ? "red"
-                          : "#333",
-                      padding: "16px",
-                      borderRadius: "4px",
-                      marginBottom: "8px",
-                      border: "1px solid #E0E0E0",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          color: "#fff",
-                          fontWeight: "bold",
+                          backgroundColor:
+                            deletingLecture?.sectionIndex === sectionIndex &&
+                            deletingLecture?.lectureId === Lecture?._id
+                              ? "red"
+                              : "#333",
+                          padding: "16px",
+                          borderRadius: "4px",
                           marginBottom: "8px",
+                          border: "1px solid #E0E0E0",
                         }}
                       >
-                        Lecture {LectureIndex + 1} : {Lecture?.title}
-                      </Typography>
-
-                      <Box>
-                        <IconButton
-                          onClick={() => handleOpenModal(Lecture, sectionIndex)}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
                         >
-                          {Lecture?.content ? (
-                            <LibraryAddCheckIcon
-                              sx={{
-                                color: "#fff",
-                              }}
-                            />
-                          ) : (
-                            <NotesIcon
-                              sx={{
-                                color: "#fff",
-                              }}
-                            />
-                          )}
-                        </IconButton>
-
-                        <IconButton
-                          onClick={() =>
-                            handleOpenVideoModal(Lecture, sectionIndex)
-                          }
-                        >
-                          {Lecture?.videourl ? (
-                            <OndemandVideoIcon
-                              sx={{
-                                color: "#fff",
-                              }}
-                            />
-                          ) : (
-                            <PersonalVideoIcon
-                              sx={{
-                                color: "#fff",
-                              }}
-                            />
-                          )}
-                        </IconButton>
-
-                        <IconButton
-                          onClick={() =>
-                            startEditing("lecture", sectionIndex, LectureIndex)
-                          }
-                        >
-                          <EditIcon
+                          <Typography
                             sx={{
                               color: "#fff",
-                            }}
-                          />
-                        </IconButton>
-
-                        <IconButton
-                          onClick={() =>
-                            handleDeleteLecture(sectionIndex, Lecture._id)
-                          }
-                        >
-                          <DeleteIcon
-                            sx={{
-                              color: "#fff",
-                            }}
-                          />
-                        </IconButton>
-                      </Box>
-                    </Box>
-
-                    {/* Lecture editing below the lecture title */}
-                    {editing &&
-                      editing.type === "lecture" &&
-                      editing.sectionIndex === sectionIndex &&
-                      editing.LectureIndex === LectureIndex && (
-                        <Box sx={{ marginTop: "16px" }}>
-                          <TextField
-                            fullWidth
-                            value={editLectureValue || ""}
-                            onChange={(e) =>
-                              setEditLectureValue(e.target.value)
-                            }
-                            sx={{
+                              fontWeight: "bold",
                               marginBottom: "8px",
-                              backgroundColor: "#212121",
-                              borderRadius: "4px",
-                              color: "#fff",
-                              input: { color: "white" },
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                  borderColor: "#fff",
-                                },
-                                "&:hover fieldset": {
-                                  borderColor: "#fff",
-                                },
-                                "&.Mui-focused fieldset": {
-                                  borderColor: "#fff",
-                                },
-                              },
-                            }}
-                          />
-
-                          <Box
-                            sx={{
-                              display: "flex",
-                              justifyContent: "flex-end",
-                            }}
-                          ></Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              justifyContent: "flex-end",
                             }}
                           >
-                            <Button
-                              variant="contained"
-                              onClick={handleCancelEdit}
-                              sx={{
-                                marginRight: "8px",
-                                textTransform: "none",
-                                border: "1px solid #E0E0E0",
-                                color: "#FFFFFF",
-                                backgroundColor: "#000",
-                              }}
+                            Lecture {LectureIndex + 1} : {Lecture?.title}
+                          </Typography>
+
+                          <Box>
+                            <IconButton
+                              onClick={() =>
+                                handleOpenModal(Lecture, sectionIndex)
+                              }
                             >
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="contained"
-                              onClick={handleSaveEdit}
-                              sx={{
-                                color: "#FFFFFF",
-                                backgroundColor: "#000",
-                                textTransform: "none",
-                                border: "1px solid #E0E0E0",
-                              }}
+                              {Lecture?.content ? (
+                                <LibraryAddCheckIcon
+                                  sx={{
+                                    color: "#fff",
+                                  }}
+                                />
+                              ) : (
+                                <NotesIcon
+                                  sx={{
+                                    color: "#fff",
+                                  }}
+                                />
+                              )}
+                            </IconButton>
+
+                            <IconButton
+                              onClick={() =>
+                                handleOpenVideoModal(Lecture, sectionIndex)
+                              }
                             >
-                              Save Lecture
-                            </Button>
+                              {Lecture?.videourl ? (
+                                <OndemandVideoIcon
+                                  sx={{
+                                    color: "#fff",
+                                  }}
+                                />
+                              ) : (
+                                <PersonalVideoIcon
+                                  sx={{
+                                    color: "#fff",
+                                  }}
+                                />
+                              )}
+                            </IconButton>
+
+                            <IconButton
+                              onClick={() =>
+                                startEditing(
+                                  "lecture",
+                                  sectionIndex,
+                                  LectureIndex
+                                )
+                              }
+                            >
+                              <EditIcon
+                                sx={{
+                                  color: "#fff",
+                                }}
+                              />
+                            </IconButton>
+
+                            <IconButton
+                              onClick={() =>
+                                handleDeleteLecture(sectionIndex, Lecture._id)
+                              }
+                            >
+                              <DeleteIcon
+                                sx={{
+                                  color: "#fff",
+                                }}
+                              />
+                            </IconButton>
                           </Box>
                         </Box>
-                      )}
-                  </Box>
-                ))}
 
+                        {/* Lecture editing below the lecture title */}
+                        {editing &&
+                          editing.type === "lecture" &&
+                          editing.sectionIndex === sectionIndex &&
+                          editing.LectureIndex === LectureIndex && (
+                            <Box sx={{ marginTop: "16px" }}>
+                              <TextField
+                                fullWidth
+                                value={editLectureValue || ""}
+                                onChange={(e) =>
+                                  setEditLectureValue(e.target.value)
+                                }
+                                sx={{
+                                  marginBottom: "8px",
+                                  backgroundColor: "#212121",
+                                  borderRadius: "4px",
+                                  color: "#fff",
+                                  input: { color: "white" },
+                                  "& .MuiOutlinedInput-root": {
+                                    "& fieldset": {
+                                      borderColor: "#fff",
+                                    },
+                                    "&:hover fieldset": {
+                                      borderColor: "#fff",
+                                    },
+                                    "&.Mui-focused fieldset": {
+                                      borderColor: "#fff",
+                                    },
+                                  },
+                                }}
+                              />
+
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                }}
+                              ></Box>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  onClick={handleCancelEdit}
+                                  sx={{
+                                    marginRight: "8px",
+                                    textTransform: "none",
+                                    border: "1px solid #E0E0E0",
+                                    color: "#FFFFFF",
+                                    backgroundColor: "#000",
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  onClick={handleSaveEdit}
+                                  sx={{
+                                    color: "#FFFFFF",
+                                    backgroundColor: "#000",
+                                    textTransform: "none",
+                                    border: "1px solid #E0E0E0",
+                                  }}
+                                >
+                                  Save Lecture
+                                </Button>
+                              </Box>
+                            </Box>
+                          )}
+                      </Box>
+                    ))}
+
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => handleAddLecture(sectionIndex)}
+                      sx={{
+                        marginTop: "8px",
+                        color: "#ffff",
+                        backgroundColor: "#000",
+                        textTransform: "none",
+                      }}
+                    >
+                      Add Lecture
+                    </Button>
+                  </Box>
+                </Box>
+              </DraggableSection>
+            ))}
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddSection}
+            sx={{
+              marginTop: "16px",
+              color: "#ffff",
+              backgroundColor: "#000",
+              textTransform: "none",
+            }}
+          >
+            Add Section
+          </Button>
+
+          <Modal open={openModal} onClose={handleCloseModal}>
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%,-50%)",
+                width: "80%",
+                bgcolor: "#212121",
+                border: "2px solid #000",
+                p: 4,
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 2,
+                }}
+              >
+                Edit Lecture {currentLecture?.title}
+              </Typography>
+
+              <MdEditor
+                value={content}
+                style={{
+                  height: "80vh", // Set the editor height
+                }}
+                // renderHTML={(text) => new MarkdownIt().render(text)}
+                onChange={({ text }) => setContent(text)}
+                renderHTML={(text) => md.render(text)} // Use the initialized md
+                onImageUpload={(file) => imageUpload(file)}
+                placeholder="Write your Content here..."
+              />
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
                 <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => handleAddLecture(sectionIndex)}
-                  sx={{
-                    marginTop: "8px",
-                    color: "#ffff",
-                    backgroundColor: "#000",
-                    textTransform: "none",
-                  }}
+                  variant="outlined"
+                  onClick={handleCloseModal}
+                  sx={{ marginRight: "8px" }}
                 >
-                  Add Lecture
+                  Cancel
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleSaveContent}
+                  sx={{ color: "#fff", backgroundColor: "#000" }}
+                >
+                  Save
                 </Button>
               </Box>
             </Box>
-          ))}
+          </Modal>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddSection}
-          sx={{
-            marginTop: "16px",
-            color: "#ffff",
-            backgroundColor: "#000",
-            textTransform: "none",
-          }}
-        >
-          Add Section
-        </Button>
-
-        <Modal open={openModal} onClose={handleCloseModal}>
-          <Box
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%,-50%)",
-              width: "80%",
-              bgcolor: "#212121",
-              border: "2px solid #000",
-              p: 4,
-            }}
-          >
-            <Typography
-              variant="h6"
+          {/* Modal for editing lecture video content */}
+          <Modal open={openVideoModal} onClose={handleCloseVideoModal}>
+            <Box
               sx={{
-                mb: 2,
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "80%",
+                bgcolor: "#212121",
+                border: "2px solid #000",
+                // boxShadow: 24,
+                p: 4,
               }}
             >
-              Edit Lecture {currentLecture?.title}
-            </Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Edit Lecture{"   "}
+                {currentLecture?.title}
+              </Typography>
 
-            <MdEditor
-              value={content}
-              style={{
-                height: "80vh", // Set the editor height
-              }}
-              // renderHTML={(text) => new MarkdownIt().render(text)}
-              onChange={({ text }) => setContent(text)}
-              renderHTML={(text) => md.render(text)} // Use the initialized md
-              onImageUpload={(file) => imageUpload(file)}
-              placeholder="Write your Content here..."
-            />
-
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
-              <Button
+              <TextField
+                label="Add VideoURL"
                 variant="outlined"
-                onClick={handleCloseModal}
-                sx={{ marginRight: "8px" }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={handleSaveContent}
-                sx={{ color: "#fff", backgroundColor: "#000" }}
-              >
-                Save
-              </Button>
-            </Box>
-          </Box>
-        </Modal>
-
-        {/* Modal for editing lecture video content */}
-        <Modal open={openVideoModal} onClose={handleCloseVideoModal}>
-          <Box
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "80%",
-              bgcolor: "#212121",
-              border: "2px solid #000",
-              // boxShadow: 24,
-              p: 4,
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Edit Lecture{"   "}
-              {currentLecture?.title}
-            </Typography>
-
-            <TextField
-              label="Add VideoURL"
-              variant="outlined"
-              fullWidth
-              value={videourl}
-              onChange={(e) => setVideourl(e.target.value)}
-              InputLabelProps={{
-                style: { color: "#8A12FC" },
-              }}
-              sx={{
-                input: { color: "white" },
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "#8A12FC",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#8A12FC",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#8A12FC",
-                  },
-                },
-              }}
-            />
-
-            {currentLecture && currentLecture.videourl ? (
-              <Box
-                sx={{
-                  width: "100%",
-                  height: "80vh",
-                  padding: "16px",
-                  backgroundColor: "#212121",
+                fullWidth
+                value={videourl}
+                onChange={(e) => setVideourl(e.target.value)}
+                InputLabelProps={{
+                  style: { color: "#8A12FC" },
                 }}
-              >
-                <ReactPlayer
-                  src={currentLecture.videourl}
-                  width="100%"
-                  height="100%"
-                  controls
-                  light={true}
-                  playing={false}
-                />
-              </Box>
-            ) : (
-              <Box sx={{ padding: "16px", textAlign: "center" }}>
-                <p>No video available for this lecture.</p>
-              </Box>
-            )}
+                sx={{
+                  input: { color: "white" },
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: "#8A12FC",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#8A12FC",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#8A12FC",
+                    },
+                  },
+                }}
+              />
 
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
-              <Button
-                variant="outlined"
-                onClick={handleCloseVideoModal}
-                sx={{ marginRight: "8px" }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSaveVideoContent}
-                sx={{ color: "#fff", backgroundColor: "#000" }}
-              >
-                Save
-              </Button>
+              {currentLecture && currentLecture.videourl ? (
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "80vh",
+                    padding: "16px",
+                    backgroundColor: "#212121",
+                  }}
+                >
+                  <ReactPlayer
+                    src={currentLecture.videourl}
+                    width="100%"
+                    height="100%"
+                    controls
+                    light={true}
+                    playing={false}
+                  />
+                </Box>
+              ) : (
+                <Box sx={{ padding: "16px", textAlign: "center" }}>
+                  <p>No video available for this lecture.</p>
+                </Box>
+              )}
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleCloseVideoModal}
+                  sx={{ marginRight: "8px" }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSaveVideoContent}
+                  sx={{ color: "#fff", backgroundColor: "#000" }}
+                >
+                  Save
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </Modal>
-      </Box>
+          </Modal>
+        </Box>
+      </DndProvider>
 
       <Sidebar />
     </>
