@@ -3,7 +3,7 @@ import { Box, Grid, Card, CardContent } from "@mui/material";
 
 // import Footer from "@/components/footer/Footer";
 import Accordionleft from "@/components/categorysingle/Accordion";
-//import Centerads from "@/components/categorysingle/Centerads";
+import Centerads from "@/components/categorysingle/Centerads";
 
 //import Content from "@/components/categorysingle/Content";
 // import Title from "@/components/categorysingle/Title";
@@ -22,42 +22,54 @@ export default function ContentLayout({ content, loading }) {
     <>
       <Navbar />
 
-      <Box
-        sx={{
-          bgcolor: "#212121",
-          color: "#fff",
-          minHeight: "100vh",
-        }}
-      >
+      <Box sx={{ bgcolor: "#212121", color: "#fff", minHeight: "100vh" }}>
         <Grid container spacing={1}>
+          {/* Left Accordion Menu */}
           <Grid item xs={12} md={3}>
             <Accordionleft />
-            {/* <Grid item xs={12} md={7}>
-              <Centerads />
-              <Content />
-              <SimilarReads />
-              <Grid
-                item
-                xs={12}
-                md={2}
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <Card>
-                  <CardContent>
-                    <Advertisement />
-                    <Advertisementtop />
-                    <Advertisementbottom />
-                    <Advertisement />
-                    <Advertisementtop />
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid> */}
           </Grid>
+
+          {/* Center Content */}
+          <Grid item xs={12} md={7}>
+            <Centerads />
+            {/* 
+            <Title content={content} plan={plan} loading={loading} />
+            <Content content={content} loading={loading} />
+
+            <SimilarReads /> */}
+          </Grid>
+
+          {/* Right Ads Section */}
+          {/* <Grid
+            item
+            xs={12}
+            md={2}
+            sx={{
+              //  bgcolor: "#1e1e1e",
+              display: "flex",
+              justifyContent: "center",
+              // alignItems: "center",
+            }}
+          >
+            <Card sx={{ maxWidth: 300, bgcolor: "#212121", color: "#fff" }}>
+              <CardContent>
+                {plan ? null : (
+                  <>
+                    <Advertisement />
+                    <Advertisementtop />
+                    <Advertisementbottam />
+
+                    <Advertisement />
+                    <Advertisementtop />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </Grid> */}
         </Grid>
+
+        {/* Floating Menu Icon for Mobile */}
+        {/* <Footer /> */}
       </Box>
     </>
   );
