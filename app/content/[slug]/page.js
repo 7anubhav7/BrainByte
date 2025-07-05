@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-//import ContentDisplay from "@/components/contentdisplay/Contentdisplay"
+import ContentDisplay from "@/components/contentdisplay/ContentDisplay";
 
 const ContentViewPage = ({ params: promiseParams }) => {
   const [content, setContent] = useState(null);
@@ -49,7 +49,7 @@ const ContentViewPage = ({ params: promiseParams }) => {
 
   return (
     <>
-      <h1>Content</h1>
+      <ContentDisplay content={content} loading={loading} />
     </>
   );
 };
