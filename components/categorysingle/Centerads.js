@@ -1,5 +1,6 @@
 import { Box, Typography, Button } from "@mui/material";
 import { useRouter } from "next/navigation";
+import Share from "@/components/categorysingle/Share";
 export default function AdBanner() {
   const router = useRouter(); // Initialize useRouter
   return (
@@ -113,6 +114,7 @@ export default function AdBanner() {
           Go Premium
         </Button>
       </Box>
+      <Share />
     </Box>
   );
 }
