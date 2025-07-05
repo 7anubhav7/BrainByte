@@ -120,7 +120,7 @@ const ResponsiveComponent = ({ content }) => {
                   color: "green",
                 },
               }}
-              //onClick={handleGain}
+              onClick={() => setChatModalOpen(true)}
             >
               <ChatBubbleOutlineIcon />
             </IconButton>
@@ -137,6 +137,101 @@ const ResponsiveComponent = ({ content }) => {
           backgroundColor: "white",
         }}
       />
+      <Modal
+        open={chatModalOpen}
+        onClose={() => setChatModalOpen(false)}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{
+            backgroundColor: "#212121",
+            color: "#fff",
+            padding: 4,
+            width: "80%",
+            maxWidth: "1100px",
+            textAlign: "center",
+            maxHeight: "90vh",
+            overflow: "auto",
+            borderRadius: "8px",
+            boxShadow: "linear-gradient(to right, #4caf50, #81c784)",
+
+            //For more fancier styles
+            // "&:hover": {
+            //   background: "linear-gradient(to right, #4caf50, #81c784)",
+            //   color: "#fff",
+            //   border: "2px solid #81c784",
+            //   transform: "scale(1.05)",
+            //   transition: "all 0.3s ease",
+            // },
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              marginBottom: 2,
+              fontWeight: "bold",
+              fontSize: "1.5rem",
+              color: "linear-gradient(to right, #4caf50, #81c784)",
+            }}
+          >
+            Comment
+          </Typography>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Box
+            sx={{
+              p: 5,
+              margin: "0 auto",
+              transition: "transform 0.3s ease",
+              "&:hover": {
+                transform: "scale(1.02)",
+              },
+              "& iframe": {
+                borderRadius: "12px",
+                border: "none",
+              },
+            }}
+          >
+            <DiscussionEmbed
+              shortname="http-localhost-3000-7n5zjsctmg"
+              config={{
+                url: `${process.env.CLIENT_URL}/content/${content?.slug}`,
+                identifier: content?._id,
+                title: content?.title,
+                language: "en", //e.g. for Traditional Chinese (Taiwan)
+              }}
+            />
+          </Box>
+          <Button
+            sx={{
+              width: "100%",
+              marginTop: 2,
+              color: "#4caf50",
+              border: "2px solid ##4caf50",
+              background: "transparent",
+              padding: "12px",
+              borderRadius: "8px",
+              fontWeight: "bold",
+              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+              "&:hover": {
+                background: "linear-gradient(to right, #4caf50, #81c784)",
+                color: "#fff",
+                border: "2px solid #81c784",
+                transform: "scale(1.05)",
+                transition: "all 0.3s ease",
+              },
+            }}
+            onClick={() => setChatModalOpen(false)}
+          >
+            Close
+          </Button>
+        </Box>
+      </Modal>
     </>
   );
 };

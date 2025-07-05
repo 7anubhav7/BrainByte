@@ -1,5 +1,5 @@
 // /** @type {import('next').NextConfig} */
-import config, { NEXTAUTH_SECRET } from "./config.js";
+import config, { CLIENT_URL, NEXTAUTH_SECRET } from "./config.js";
 const nextConfig = {
   env: {
     DB_URI: config.DB_URI,
@@ -12,6 +12,7 @@ const nextConfig = {
     CLOUDINARY_CLOUD_NAME: config.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: config.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: config.CLOUDINARY_API_SECRET,
+    CLIENT_URL: config.CLIENT_URL,
   },
 };
 
