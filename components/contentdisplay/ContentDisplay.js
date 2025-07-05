@@ -6,7 +6,7 @@ import Accordionleft from "@/components/categorysingle/Accordion";
 import Centerads from "@/components/categorysingle/Centerads";
 
 //import Content from "@/components/categorysingle/Content";
-// import Title from "@/components/categorysingle/Title";
+import Title from "@/components/categorysingle/Title";
 //import SimilarReads from "@/components/categorysingle/SimilarReads";
 import Advertisement from "@/components/categorysingle/Advertisement";
 import Advertisementtop from "@/components/categorysingle/Advertisementtop";
@@ -32,8 +32,9 @@ export default function ContentLayout({ content, loading }) {
           {/* Center Content */}
           <Grid item xs={12} md={7}>
             <Centerads />
-            {/* 
-            <Title content={content} plan={plan} loading={loading} />
+
+            <Title content={content} loading={loading} />
+            {/*
             <Content content={content} loading={loading} />
 
             <SimilarReads /> */}
