@@ -8,11 +8,11 @@ import Centerads from "@/components/categorysingle/Centerads";
 //import Content from "@/components/categorysingle/Content";
 // import Title from "@/components/categorysingle/Title";
 //import SimilarReads from "@/components/categorysingle/SimilarReads";
-//import Advertisement from "@/components/categorysingle/Advertisement";
-//import Advertisementtop from "@/components/categorysingle/Advertisementtop";
+import Advertisement from "@/components/categorysingle/Advertisement";
+import Advertisementtop from "@/components/categorysingle/Advertisementtop";
 
 // import { useSession } from "next-auth/react";
-//import Advertisementbottom from "@/components/categorysingle/Advertisementbottom";
+import Advertisementbottom from "@/components/categorysingle/Advertisementbottom";
 
 // import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
@@ -40,7 +40,7 @@ export default function ContentLayout({ content, loading }) {
           </Grid>
 
           {/* Right Ads Section */}
-          {/* <Grid
+          <Grid
             item
             xs={12}
             md={2}
@@ -48,24 +48,19 @@ export default function ContentLayout({ content, loading }) {
               //  bgcolor: "#1e1e1e",
               display: "flex",
               justifyContent: "center",
-              // alignItems: "center",
             }}
           >
             <Card sx={{ maxWidth: 300, bgcolor: "#212121", color: "#fff" }}>
               <CardContent>
-                {plan ? null : (
-                  <>
-                    <Advertisement />
-                    <Advertisementtop />
-                    <Advertisementbottam />
+                <Advertisement />
+                <Advertisementtop />
+                <Advertisementbottom />
 
-                    <Advertisement />
-                    <Advertisementtop />
-                  </>
-                )}
+                <Advertisement />
+                <Advertisementtop />
               </CardContent>
             </Card>
-          </Grid> */}
+          </Grid>
         </Grid>
 
         {/* Floating Menu Icon for Mobile */}
