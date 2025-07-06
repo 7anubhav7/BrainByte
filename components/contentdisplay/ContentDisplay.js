@@ -5,7 +5,7 @@ import { Box, Grid, Card, CardContent } from "@mui/material";
 import Accordionleft from "@/components/categorysingle/Accordion";
 import Centerads from "@/components/categorysingle/Centerads";
 
-//import Content from "@/components/categorysingle/Content";
+import Content from "@/components/categorysingle/Content";
 import Title from "@/components/categorysingle/Title";
 //import SimilarReads from "@/components/categorysingle/SimilarReads";
 import Advertisement from "@/components/categorysingle/Advertisement";
@@ -30,15 +30,11 @@ export default function ContentLayout({ content, loading }) {
           </Grid>
 
           {/* Center Content */}
-          <Grid item xs={12} md={7}>
+          <Box sx={{ p: 4 }}>
             <Centerads />
-
             <Title content={content} loading={loading} />
-            {/*
             <Content content={content} loading={loading} />
-
-            <SimilarReads /> */}
-          </Grid>
+          </Box>
 
           {/* Right Ads Section */}
           <Grid
