@@ -7,7 +7,7 @@ import Centerads from "@/components/categorysingle/Centerads";
 
 import Content from "@/components/categorysingle/Content";
 import Title from "@/components/categorysingle/Title";
-//import SimilarReads from "@/components/categorysingle/SimilarReads";
+import SimilarReads from "@/components/categorysingle/SimilarReads";
 import Advertisement from "@/components/categorysingle/Advertisement";
 import Advertisementtop from "@/components/categorysingle/Advertisementtop";
 
@@ -34,6 +34,7 @@ export default function ContentLayout({ content, loading }) {
             <Centerads />
             <Title content={content} loading={loading} />
             <Content content={content} loading={loading} />
+            <SimilarReads />
           </Box>
 
           {/* Right Ads Section */}

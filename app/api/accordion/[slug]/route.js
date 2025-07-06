@@ -12,7 +12,7 @@ export async function GET(req, context) {
       { status: 500 }
     );
   }
-
+  console.log("path sent to route---", slug);
   try {
     let curriculum = await Curriculum.findOne({
       "sections.lectures.slug": slug,
