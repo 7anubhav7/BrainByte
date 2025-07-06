@@ -48,7 +48,7 @@ export default function LodashAccordion() {
   };
 
   const handleContentSelection = (lecture) => {
-    router.push(`/content/${lecture?.slug}`);
+    router.push(`/content/${lecture.slug}`);
   };
 
   return (
@@ -83,6 +83,7 @@ export default function LodashAccordion() {
         ) : (
           <>
             <Button
+              onClick={() => router.push("/pricing")}
               variant="contained"
               sx={{
                 bgcolor: "#FFD700", // Golden button

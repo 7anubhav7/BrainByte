@@ -14,7 +14,7 @@ export const config = {
 export default withAuth(
   async function middleware(req) {
     const url = req.nextUrl.pathname;
-    const token = req.nextauth.token;
+    const token = req.nextauth?.token;
     const userRole = token?.user?.role;
 
     if (url?.includes("/admin") && userRole !== "admin") {
