@@ -3,6 +3,7 @@ import config, {
   CLIENT_URL,
   GOOGLE_API_KEY,
   NEXTAUTH_SECRET,
+  STRIPE_API_KEY,
 } from "./config.js";
 const nextConfig = {
   env: {
@@ -18,6 +19,7 @@ const nextConfig = {
     CLOUDINARY_API_SECRET: config.CLOUDINARY_API_SECRET,
     CLIENT_URL: config.CLIENT_URL,
     GOOGLE_API_KEY: config.GOOGLE_API_KEY,
+    STRIPE_API_KEY: config.STRIPE_API_KEY,
   },
 };
 

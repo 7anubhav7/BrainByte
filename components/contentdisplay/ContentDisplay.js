@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Grid, Card, CardContent } from "@mui/material";
 
-// import Footer from "@/components/footer/Footer";
+import Footer from "@/components/footer/Footer";
 import Accordionleft from "@/components/categorysingle/Accordion";
 import Centerads from "@/components/categorysingle/Centerads";
 
@@ -64,6 +64,7 @@ export default function ContentLayout({ content, loading }) {
         {/* Floating Menu Icon for Mobile */}
         {/* <Footer /> */}
       </Box>
+      <Footer />
     </>
   );
 }
