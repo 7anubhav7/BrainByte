@@ -3,7 +3,7 @@
 import Sidebar from "@/components/user/sidebar/Sidebar";
 import ProfileImage from "@/components/user/profileimage/ProfileImage";
 import { Typography } from "@mui/material";
-
+import Dashboard from "@/components/user/dashboard/Dashboard";
 export default function Home() {
   return (
     <>
@@ -28,7 +28,7 @@ export default function Home() {
           User Dashboard
         </Typography>
       </div>
-
+      <Dashboard />
       <Sidebar />
     </>
   );
