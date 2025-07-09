@@ -66,7 +66,7 @@ const VideoAndAudienceCard = () => {
                   marginBottom: "12px",
                 }}
               >
-                Create an Engaging Course
+                Create an engaging Course
               </Typography>
 
               {/* Description */}
@@ -93,7 +93,7 @@ const VideoAndAudienceCard = () => {
                   fontWeight: "bold",
                   fontSize: "16px",
                 }}
-                onClick={() => router.push("/dashboard/admin/create/content")}
+                onClick={() => router.push("/dashboard/admin/create/course")}
               >
                 Get Started
               </Button>
@@ -161,7 +161,7 @@ const VideoAndAudienceCard = () => {
                   marginBottom: "12px",
                 }}
               >
-                Create an Engaging Content
+                Create engaging Content
               </Typography>
 
               {/* Description */}

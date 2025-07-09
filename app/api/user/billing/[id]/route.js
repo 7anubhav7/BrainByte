@@ -14,7 +14,6 @@ export async function GET(req, context) {
       return NextResponse.json({ err: "User not found" }, { status: 404 });
     }
     const subscription = await Subscription.findOne({ userId: user?._id });
-    console.log("from get---", subscription);
     if (!subscription) {
       return NextResponse.json(
         { err: "No subscription found!" },

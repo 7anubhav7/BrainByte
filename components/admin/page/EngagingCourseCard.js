@@ -51,7 +51,7 @@ const EngagingCourseCard = () => {
               marginBottom: "12px",
             }}
           >
-            Create an Engaging Course
+            Create Engaging Course and Content
           </Typography>
 
           {/* Description */}
