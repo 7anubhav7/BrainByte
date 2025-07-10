@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 
 import { toast } from "react-toastify";
+import CourseCard from "./CourseCard";
 
 const CourseControl = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -165,6 +166,7 @@ const CourseControl = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <CourseCard />
     </>
   );
 };
