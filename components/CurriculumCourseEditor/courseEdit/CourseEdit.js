@@ -13,6 +13,7 @@ import {
 import { toast } from "react-toastify";
 import EditIcon from "@mui/icons-material/Edit";
 import VideoUpLoader from "./UploadVideo";
+import { TableRowsTwoTone } from "@mui/icons-material";
 
 const CourseEdit = ({ content, loading }) => {
   const [formData, setFormData] = useState({
@@ -81,8 +82,41 @@ const CourseEdit = ({ content, loading }) => {
     }
   };
 
-  const handleSubmit = () => {
-    alert("handle submit");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(
+        `${process.env.API}/admin/curriculumCourse/${content?._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+      if (!response.ok) {
+        toast.error(`Error ${response.status} - ${response.statusText}`);
+      }
+      const result = await response.json();
+      toast.success("Data successfully submitted");
+
+      setFormData({
+        title: "",
+        about: "",
+        description: "",
+        image: null,
+        imageUrl: "",
+        level: "",
+        videoUrl: null,
+        price: "",
+      });
+
+      setPreview(null);
+    } catch (error) {
+      console.log("Failed to submit form");
+      toast.error("There was an error from handleSubmit");
+    }
   };
 
   if (loading) {

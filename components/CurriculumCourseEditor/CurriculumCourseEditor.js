@@ -170,7 +170,7 @@ const CurriculumEditor = () => {
   const fetchCurriculum = async (searchId) => {
     setLoading(true);
     const response = await fetch(
-      `${process.env.API}/admin/singlecurriculum/${searchId}`
+      `${process.env.API}/admin/singlecourse/${searchId}`
     );
     const data = await response.json();
     console.log("DATA FROM Fetch Curriculum fn----", data);
@@ -202,7 +202,7 @@ const CurriculumEditor = () => {
     console.log("data sent from handle add section----", data);
     try {
       const response = await fetch(
-        `${process.env.API}/admin/Curriculum/section`,
+        `${process.env.API}/admin/curriculumCourse/section`,
         {
           method: "POST",
           headers: {
@@ -237,7 +237,7 @@ const CurriculumEditor = () => {
   const handleDeleteSection = async (sectionId) => {
     setDeletingSection(sectionId);
     const response = await fetch(
-      `${process.env.API}/admin/Curriculum/section/${sectionId}`,
+      `${process.env.API}/admin/curriculumCourse/section/${sectionId}`,
       {
         method: "DELETE",
         headers: {
@@ -300,7 +300,7 @@ const CurriculumEditor = () => {
       };
 
       const response = await fetch(
-        `${process.env.API}/admin/Curriculum/section/${updatedSection?._id}`,
+        `${process.env.API}/admin/curriculumCourse/section/${updatedSection?._id}`,
         {
           method: "PUT",
           headers: {
@@ -342,7 +342,7 @@ const CurriculumEditor = () => {
       console.log("save lecture", data);
 
       const response = await fetch(
-        `${process.env.API}/admin/Curriculum/section/lecture/${
+        `${process.env.API}/admin/curriculumCourse/section/lecture/${
           curriculum[editing.sectionIndex]?.lectures[editing.LectureIndex]?._id
         }`,
         {
@@ -401,7 +401,7 @@ const CurriculumEditor = () => {
     };
 
     const response = await fetch(
-      `${process.env.API}/admin/Curriculum/section/lecture`,
+      `${process.env.API}/admin/curriculumCourse/section/lecture`,
       {
         method: "POST",
         headers: {
@@ -443,7 +443,7 @@ const CurriculumEditor = () => {
     };
 
     const response = await fetch(
-      `${process.env.API}/admin/Curriculum/section/lecture/${lectureId}`,
+      `${process.env.API}/admin/curriculumCourse/section/lecture/${lectureId}`,
       {
         method: "DELETE",
         headers: {
@@ -485,7 +485,7 @@ const CurriculumEditor = () => {
 
     try {
       await fetch(
-        `${process.env.API}/admin/Curriculum/section/updateSectionOrder`,
+        `${process.env.API}/admin/curriculumCourse/section/updateSectionOrder`,
         {
           method: "POST",
           headers: {
@@ -527,7 +527,7 @@ const CurriculumEditor = () => {
     setCurriculum(updatedSections);
     try {
       await fetch(
-        `${process.env.API}/admin/Curriculum/section/lecture/updateLectureOrder`,
+        `${process.env.API}/admin/curriculumCourse/section/lecture/updateLectureOrder`,
         {
           method: "POST",
           headers: {
@@ -593,7 +593,7 @@ const CurriculumEditor = () => {
       search,
     };
     const response = await fetch(
-      `${process.env.API}/admin/Curriculum/section/lecture/content/${lecturebody?._id}`,
+      `${process.env.API}/admin/curriculumCourse/section/lecture/content/${lecturebody?._id}`,
       {
         method: "PUT",
         headers: {
@@ -648,7 +648,7 @@ const CurriculumEditor = () => {
       search,
     };
     const response = await fetch(
-      `${process.env.API}/admin/Curriculum/section/lecture/content/${lecturebody?._id}`,
+      `${process.env.API}/admin/curriculumCourse/section/lecture/content/${lecturebody?._id}`,
       {
         method: "PUT",
         headers: {
