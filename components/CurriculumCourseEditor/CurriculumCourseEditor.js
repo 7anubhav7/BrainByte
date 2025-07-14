@@ -21,6 +21,9 @@ import "react-markdown-editor-lite/lib/index.css";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { imageUpload } from "@/components/functions/Upload";
+import axios from "axios";
+import CloseIcon from "@mui/icons-material/Close";
+import Tab from "./Tab";
 
 import {
   Box,
@@ -29,7 +32,10 @@ import {
   IconButton,
   TextField,
   Modal,
-  useScrollTrigger,
+  Card,
+  CardContent,
+  CardActions,
+  LinearProgress,
 } from "@mui/material";
 
 import Sidebar from "../sidebar/SideBar";
@@ -551,6 +557,10 @@ const CurriculumEditor = () => {
   const [currentLecture, setCurrentLecture] = useState(null);
   const [content, setContent] = useState("");
   const [currentSectionIndex, setCurrentSectionIndex] = useState(null);
+  const [file, setFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [videoURL, setVideoURL] = useState("");
+  const [buffer, setBuffer] = useState(10);
 
   const handleOpenModal = (Lecture, sectionIndex) => {
     setCurrentSectionIndex(sectionIndex);
@@ -637,6 +647,7 @@ const CurriculumEditor = () => {
   };
 
   const handleSaveVideoContent = async () => {
+    setFile(null);
     const sectionId = curriculum[currentSectionIndex]?._id;
     const lecturebody = {
       ...currentLecture,
@@ -677,6 +688,74 @@ const CurriculumEditor = () => {
     handleCloseVideoModal();
   };
 
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    const maxSizeInMB = 100; // Set max file size in MB
+
+    if (selectedFile && selectedFile.size > maxSizeInMB * 1024 * 1024) {
+      alert(
+        `File size exceeds ${maxSizeInMB}MB. Please upload a smaller file.`
+      );
+      setFile(null);
+      return;
+    }
+
+    setFile(selectedFile);
+    setVideoURL("");
+    setUploadProgress(0);
+    setBuffer(10); // Reset buffer on new file
+  };
+
+  const handleRemoveVideo = () => {
+    setFile(null);
+    // setFormData((prev) => ({
+    //   ...prev,
+    //   videoUrl: "", // Set it to empty string, not null
+    // }));
+    setVideoURL("");
+    setUploadProgress(0);
+    setBuffer(10); // Reset buffer when removing video
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      console.log("Please select a file to upload.");
+      return;
+    }
+
+    const formDataToUpload = new FormData();
+    formDataToUpload.append("file", file);
+    formDataToUpload.append("upload_preset", "ml_default");
+
+    try {
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload`,
+        formDataToUpload,
+        {
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            setUploadProgress(progress);
+            if (progress % 5 === 0 && buffer < 100) {
+              setBuffer(buffer + 1 + Math.random() * 10); // Simulate buffering
+            }
+          },
+        }
+      );
+
+      setVideourl(response.data.secure_url);
+      setVideoURL(response.data.secure_url);
+      setUploadProgress(0);
+      setBuffer(100); // Set buffer to 100 once upload is successful
+      console.log("Upload successful!");
+    } catch (error) {
+      alert(error);
+      console.log("Error uploading video:", error.response || error.message);
+      console.log("Upload failed. Please try again.");
+    }
+  };
+
   return (
     <>
       <Box
@@ -701,6 +780,8 @@ const CurriculumEditor = () => {
           {contenttitle}
         </Typography>
       </Box>
+
+      <Tab />
 
       <DndProvider backend={HTML5Backend}>
         <Box
@@ -890,26 +971,6 @@ const CurriculumEditor = () => {
                             </Typography>
 
                             <Box>
-                              <IconButton
-                                onClick={() =>
-                                  handleOpenModal(Lecture, sectionIndex)
-                                }
-                              >
-                                {Lecture?.content ? (
-                                  <LibraryAddCheckIcon
-                                    sx={{
-                                      color: "#fff",
-                                    }}
-                                  />
-                                ) : (
-                                  <NotesIcon
-                                    sx={{
-                                      color: "#fff",
-                                    }}
-                                  />
-                                )}
-                              </IconButton>
-
                               <IconButton
                                 onClick={() =>
                                   handleOpenVideoModal(Lecture, sectionIndex)
@@ -1130,10 +1191,13 @@ const CurriculumEditor = () => {
                 left: "50%",
                 transform: "translate(-50%, -50%)",
                 width: "80%",
+                maxHeight: "90vh",
+                overflowY: "auto",
                 bgcolor: "#212121",
                 border: "2px solid #000",
                 // boxShadow: 24,
                 p: 4,
+                borderRadius: 2,
               }}
             >
               <Typography variant="h6" sx={{ mb: 2 }}>
@@ -1141,30 +1205,145 @@ const CurriculumEditor = () => {
                 {currentLecture?.title}
               </Typography>
 
-              <TextField
-                label="Add VideoURL"
-                variant="outlined"
-                fullWidth
-                value={videourl}
-                onChange={(e) => setVideourl(e.target.value)}
-                InputLabelProps={{
-                  style: { color: "#8A12FC" },
-                }}
+              <Card
                 sx={{
-                  input: { color: "white" },
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": {
-                      borderColor: "#8A12FC",
-                    },
-                    "&:hover fieldset": {
-                      borderColor: "#8A12FC",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#8A12FC",
-                    },
-                  },
+                  maxWidth: 900,
+                  mx: "auto",
+                  mt: 4,
+                  p: 2,
+
+                  borderRadius: 2,
+                  bgcolor: "#212121",
+                  color: "white",
                 }}
-              />
+              >
+                <CardContent>
+                  <Typography variant="h4" align="center" gutterBottom>
+                    🎥 Video Uploader
+                  </Typography>
+
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    component="label"
+                    sx={{
+                      width: "100%",
+                      p: 2,
+                      borderRadius: 1,
+                      mt: 2,
+                      textTransform: "none",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      border: "1px solid #ddd",
+                      fontSize: "1rem",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {file ? file.name : "Select Video"}
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleFileChange}
+                      hidden
+                    />
+                  </Button>
+
+                  {uploadProgress > 0 && (
+                    <Box
+                      sx={{
+                        mt: 3,
+                        position: "relative",
+                        width: "100%",
+                        height: 30,
+                        borderRadius: 4,
+                        backgroundColor: "#122121",
+                        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
+                      <LinearProgress
+                        variant="buffer"
+                        value={uploadProgress}
+                        valueBuffer={buffer}
+                        sx={{
+                          height: "100%",
+                          borderRadius: 4,
+                          "& .MuiLinearProgress-bar": {
+                            backgroundColor: "#8A12FC",
+                          },
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          position: "absolute",
+                          top: 0,
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          color: "#fff",
+                          fontWeight: "bold",
+                          lineHeight: "30px",
+                        }}
+                      >
+                        {uploadProgress}%
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {videoURL && (
+                    <Box sx={{ mt: 3, position: "relative" }}>
+                      <Typography variant="subtitle1">
+                        Uploaded Video:
+                      </Typography>
+                      <video
+                        src={videoURL}
+                        controls
+                        style={{
+                          width: "100%",
+                          borderRadius: "8px",
+                          marginTop: "10px",
+                          boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
+                        }}
+                      />
+                      <IconButton
+                        aria-label="remove video"
+                        onClick={handleRemoveVideo}
+                        sx={{
+                          position: "absolute",
+                          top: 0,
+                          right: 0,
+                          background: "rgba(240, 13, 13, 0.8)",
+                          boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
+                          "&:hover": { background: "red" },
+                        }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    </Box>
+                  )}
+                </CardContent>
+
+                <CardActions sx={{ justifyContent: "center" }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    onClick={handleUpload}
+                    disabled={!file}
+                    sx={{
+                      textTransform: "capitalize",
+                      px: 3,
+                      py: 1.5,
+                      mt: 2,
+                      borderRadius: 2,
+                      backgroundColor: "#8A12FC",
+                    }}
+                  >
+                    Upload Video
+                  </Button>
+                </CardActions>
+              </Card>
 
               {currentLecture && currentLecture.videourl ? (
                 <Box
@@ -1176,7 +1355,7 @@ const CurriculumEditor = () => {
                   }}
                 >
                   <ReactPlayer
-                    src={currentLecture.videourl}
+                    src={currentLecture?.videourl}
                     width="100%"
                     height="100%"
                     controls
@@ -1185,12 +1364,23 @@ const CurriculumEditor = () => {
                   />
                 </Box>
               ) : (
-                <Box sx={{ padding: "16px", textAlign: "center" }}>
-                  <p>No video available for this lecture.</p>
+                <Box
+                  sx={{
+                    padding: "16px",
+                    textAlign: "center",
+                  }}
+                >
+                  <p>No video for this url</p>
                 </Box>
               )}
 
-              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  mt: 3,
+                }}
+              >
                 <Button
                   variant="outlined"
                   onClick={handleCloseVideoModal}
@@ -1198,8 +1388,9 @@ const CurriculumEditor = () => {
                 >
                   Cancel
                 </Button>
+
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   onClick={handleSaveVideoContent}
                   sx={{ color: "#fff", backgroundColor: "#000" }}
                 >
