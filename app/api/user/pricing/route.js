@@ -5,7 +5,7 @@ import User from "@/models/user"; // User model to interact with the MongoDB use
 import { getServerSession } from "next-auth/next"; // NextAuth function to get the session of the current user
 import { authOptions } from "@/utils/authOptions";
 
-const stripeInstance = new Stripe(STRIPE_API_KEY);
+const stripeInstance = new Stripe(process.env.STRIPE_API_KEY);
 export async function POST(req, context) {
   await dbConnect();
   const body = await req.json();
