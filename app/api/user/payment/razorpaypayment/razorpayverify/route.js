@@ -50,7 +50,7 @@ export async function POST(req, context) {
       );
     }
 
-    return NextResponse.json({ success: "Payment success!" }, { status: 500 });
+    return NextResponse.json({ success: "Payment success!" }, { status: 200 });
   } catch (error) {
     console.log("Error from POST of razor verify----", error);
     return NextResponse.json({ err: error.message }, { status: 500 });
